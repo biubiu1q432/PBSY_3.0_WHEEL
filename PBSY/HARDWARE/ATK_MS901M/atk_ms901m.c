@@ -77,14 +77,13 @@ float atk_ms901m_sita_init(void){
 	float sita_init = 0;
 	float sita_arr[5]; 
 	
-	for(int i =0;i<=50;i++){
-			atk_ms901m_get_attitude(&attitude_dat,100);	
+	for(int i =0;i<=20;i++){
+			atk_ms901m_get_attitude(&attitude_dat,MPU_MAX_WAIT);	
 			float tmp_sita = attitude_dat.yaw;
 			sita_init = GildeAverageValueFilter_float(tmp_sita,sita_arr,5);
 		}	
 	
 	return sita_init;
-
 }
 
 

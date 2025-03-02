@@ -116,6 +116,8 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 
+
+
 //UART
 #define UART_PRINT 2
 
@@ -133,7 +135,8 @@ void Error_Handler(void);
 #define D		65						
 #define C_1		PI*D		
 
-
+//MPU
+#define MPU_MAX_WAIT 15
 
 /* USER CODE END Private defines */
 
