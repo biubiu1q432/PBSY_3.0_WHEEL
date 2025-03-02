@@ -1,0 +1,12 @@
+pbsy\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3/port.c
+pbsy\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
+pbsy\port.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+pbsy\port.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+pbsy\port.o: ../Core/Inc/FreeRTOSConfig.h
+pbsy\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
+pbsy\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
+pbsy\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
+pbsy\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3/portmacro.h
+pbsy\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+pbsy\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h
+pbsy\port.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h

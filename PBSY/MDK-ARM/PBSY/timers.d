@@ -1,0 +1,15 @@
+pbsy\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/timers.c
+pbsy\timers.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+pbsy\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
+pbsy\timers.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+pbsy\timers.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+pbsy\timers.o: ../Core/Inc/FreeRTOSConfig.h
+pbsy\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
+pbsy\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
+pbsy\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
+pbsy\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3/portmacro.h
+pbsy\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+pbsy\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h
+pbsy\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h
+pbsy\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h
+pbsy\timers.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h

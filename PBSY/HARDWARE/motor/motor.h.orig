@@ -1,0 +1,26 @@
+#ifndef __MOTOR_H
+#define __MOTOR_H
+
+#include "main.h"
+#include "tim.h"
+
+
+
+typedef struct 
+{
+	int EncodeCount;
+	float Distance;
+	float Motorspeed;
+} Motor_Stat;
+
+
+
+//PWM
+void Motor_Set(float Left_PWM,float Right_PWM);
+
+//EC
+void MotorSpeed_Get(void);
+
+#endif
+
+
