@@ -30,3 +30,5 @@ pbsy\tim.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 pbsy\tim.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 pbsy\tim.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
 pbsy\tim.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
+pbsy\tim.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+pbsy\tim.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h

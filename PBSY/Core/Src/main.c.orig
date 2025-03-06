@@ -111,15 +111,15 @@ int main(void)
     HAL_UART_Receive_IT(&huart5,&mpu_once_isr_data,1);//mpu
     HAL_UART_Receive_IT(&huart4,&TEST,1);//DEBUG
 
-    HAL_TIM_Base_Start(&htim1);
-    HAL_TIM_Base_Start(&htim2);
-    HAL_TIM_Base_Start(&htim3);
+
     HAL_TIM_Encoder_Start(&htim1,TIM_CHANNEL_ALL);//编码器
     HAL_TIM_Encoder_Start(&htim2,TIM_CHANNEL_ALL);
     HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);//pwm
     HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
     HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_4);
+	
+
   /* USER CODE END 2 */
 
   /* Init scheduler */

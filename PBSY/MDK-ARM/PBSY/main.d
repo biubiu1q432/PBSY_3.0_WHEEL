@@ -29,6 +29,8 @@ pbsy\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 pbsy\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 pbsy\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
 pbsy\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
+pbsy\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+pbsy\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
 pbsy\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h
 pbsy\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
 pbsy\main.o: ../Core/Inc/FreeRTOSConfig.h
@@ -45,4 +47,3 @@ pbsy\main.o: ../Core/Inc/i2c.h
 pbsy\main.o: ../Core/Inc/tim.h
 pbsy\main.o: ../Core/Inc/usart.h
 pbsy\main.o: ../Core/Inc/gpio.h
-pbsy\main.o: ..\HARDWARE\motor\motor.h

@@ -32,6 +32,10 @@
 #include "vl6180x.h"
 #include "tim.h"
 #include "motor.h"
+#include "dma.h"
+#include "semphr.h"
+#include "queue.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,7 +73,12 @@ extern Motor_Stat RIG_MOTOR;
 
 //CAR_STAT
 CAR_STAT Car_stat;
+MOVE_TASK_STAT move_task_stat;
 
+
+//CARD
+extern uint8_t CARD_DATA[20];
+extern DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE END Variables */
 /* Definitions for GET_TASK */
@@ -227,14 +236,12 @@ void Get_Task(void *argument)
 void Read_MPU(void *argument)
 {
   /* USER CODE BEGIN Read_MPU */
-	uint8_t ret;
     float sita_fliter[5];	
 	float sita_init =atk_ms901m_sita_init();
-
     /* Infinite loop */
     for(;;)
     {
-        ret = atk_ms901m_get_attitude(&attitude_dat,MPU_MAX_WAIT);
+        uint8_t	ret = atk_ms901m_get_attitude(&attitude_dat,MPU_MAX_WAIT);
         float tmp_sita = attitude_dat.yaw;
         Car_stat.Car_Alpha = GildeAverageValueFilter_float(tmp_sita,sita_fliter,5) - sita_init;
 		vTaskDelay(pdMS_TO_TICKS(20));
@@ -257,7 +264,7 @@ void Read_Lidar(void *argument)
 //    uint8_t R_D = 0;
 //    uint8_t ret1= VL6180X_Init(0);
 //    uint8_t ret2 = VL6180X_Init(1);
-//    printf("VL START!");
+    //printf("VL START!");
     /* Infinite loop */
     for(;;)
     {
@@ -291,7 +298,31 @@ void Move_Control(void *argument)
 		Car_stat.RIG_MOTOR = RIG_MOTOR;
 		
 		
-		vTaskDelay(pdMS_TO_TICKS(50));
+		if(move_task_stat.AHEAD_FLAG){
+		
+			vTaskDelay(pdMS_TO_TICKS(50));
+		}
+		
+		else if(move_task_stat.TURN_FLAG){
+			
+			vTaskDelay(pdMS_TO_TICKS(50));
+		}
+		
+		else if(move_task_stat.STOP_FLAG){
+			
+			vTaskDelay(pdMS_TO_TICKS(50));
+		}
+		
+		else if(move_task_stat.DIS_FLAG){
+			
+			vTaskDelay(pdMS_TO_TICKS(50));
+		}
+		
+		
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ñ£¬·ï¿½ï¿½ï¿½cpuÊ¹ï¿½ï¿½È¨ï¿½ï¿½ï¿½Ã³ï¿½Ê±ï¿½ï¿½Æ¬
+		else vTaskDelay(pdMS_TO_TICKS(80));
+
+		
     }
   /* USER CODE END Move_Control */
 }
@@ -309,8 +340,14 @@ void Read_ID(void *argument)
     /* Infinite loop */
     for(;;)
     {
-        HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
-        vTaskDelay(pdMS_TO_TICKS(1000));
+		if(xSemaphoreTake(CARD_FLAGHandle,portMAX_DELAY) == pdTRUE){
+			for(int i=0;i<=sizeof(CARD_DATA_SIZE);i++){
+				printf("%d",CARD_DATA[i]);
+				CARD_DATA[i] = 0;
+			}
+		}
+
+		vTaskDelay(pdMS_TO_TICKS(100));
     }
   /* USER CODE END Read_ID */
 }
@@ -333,18 +370,25 @@ extern uint8_t TEST;
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
     if( (huart->Instance == UART5) && ((huart->Instance->SR&USART_SR_RXNE) == RESET) ) {
-        atk_ms901m_uart_rx_fifo_write(&mpu_once_isr_data, 1);
+		atk_ms901m_uart_rx_fifo_write(&mpu_once_isr_data, 1);
         HAL_UART_Receive_IT(&huart5,&mpu_once_isr_data,1);
     }
 }
 
 
 /*SERIAL_DMA_ISR*/
+BaseType_t FLAG  = pdTRUE;
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 
     //CARD
     if(huart == &huart1) {
-
+		HAL_UARTEx_ReceiveToIdle_DMA(&huart1,CARD_DATA,sizeof(CARD_DATA));
+		__HAL_DMA_DISABLE_IT(&hdma_usart1_rx,DMA_IT_HT);
+		//ÐÅºÅÁ¿
+		if(CARD_FLAGHandle != NULL)	{
+			BaseType_t err = xSemaphoreGiveFromISR(CARD_FLAGHandle,&FLAG);
+		}
+		
     }
 
     //SERIAL

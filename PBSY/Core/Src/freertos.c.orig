@@ -30,7 +30,8 @@
 #include "atk_ms901m_uart.h"
 #include "math.h"
 #include "vl6180x.h"
-
+#include "tim.h"
+#include "motor.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,6 +63,13 @@ extern atk_ms901m_quaternion_data_t quaternion_dat;
 extern atk_ms901m_attitude_data_t attitude_dat;
 
 
+//MOTOR
+extern Motor_Stat LEFT_MOTOR;
+extern Motor_Stat RIG_MOTOR;
+
+//CAR_STAT
+CAR_STAT Car_stat;
+MOVE_TASK_STAT move_task_stat;
 
 
 /* USER CODE END Variables */
@@ -91,14 +99,14 @@ osThreadId_t PID_TASKHandle;
 const osThreadAttr_t PID_TASK_attributes = {
   .name = "PID_TASK",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityAboveNormal,
 };
 /* Definitions for CARD_TASK */
 osThreadId_t CARD_TASKHandle;
 const osThreadAttr_t CARD_TASK_attributes = {
   .name = "CARD_TASK",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for CARD_FLAG */
 osSemaphoreId_t CARD_FLAGHandle;
@@ -109,6 +117,11 @@ const osSemaphoreAttr_t CARD_FLAG_attributes = {
 osSemaphoreId_t TASK_FLAGHandle;
 const osSemaphoreAttr_t TASK_FLAG_attributes = {
   .name = "TASK_FLAG"
+};
+/* Definitions for STOP_FLAG */
+osSemaphoreId_t STOP_FLAGHandle;
+const osSemaphoreAttr_t STOP_FLAG_attributes = {
+  .name = "STOP_FLAG"
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -144,6 +157,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of TASK_FLAG */
   TASK_FLAGHandle = osSemaphoreNew(1, 1, &TASK_FLAG_attributes);
+
+  /* creation of STOP_FLAG */
+  STOP_FLAGHandle = osSemaphoreNew(1, 0, &STOP_FLAG_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
     /* add semaphores, ... */
@@ -212,25 +228,17 @@ void Get_Task(void *argument)
 void Read_MPU(void *argument)
 {
   /* USER CODE BEGIN Read_MPU */
-
-//    float sita_fliter[5];
-//    uint8_t ret;
-//    ret = atk_ms901m_init();
-//    if(ret == ATK_MS901M_ERROR) {
-//        printf("ATK_MS901M_ERROR");
-//    }
-//    float sita_init =atk_ms901m_sita_init();
+	uint8_t ret;
+    float sita_fliter[5];	
+	float sita_init =atk_ms901m_sita_init();
 
     /* Infinite loop */
     for(;;)
     {
-//        ret = atk_ms901m_get_attitude(&attitude_dat,100);
-
-//        float tmp_sita = attitude_dat.yaw;
-//        sita = GildeAverageValueFilter_float(tmp_sita,sita_fliter,5) - sita_init;
-//        printf("MPU: %f\r\n",sita);
-        vTaskDelay(pdMS_TO_TICKS(10));
-
+        ret = atk_ms901m_get_attitude(&attitude_dat,MPU_MAX_WAIT);
+        float tmp_sita = attitude_dat.yaw;
+        Car_stat.Car_Alpha = GildeAverageValueFilter_float(tmp_sita,sita_fliter,5) - sita_init;
+		vTaskDelay(pdMS_TO_TICKS(20));
     }
   /* USER CODE END Read_MPU */
 }
@@ -246,19 +254,19 @@ void Read_Lidar(void *argument)
 {
   /* USER CODE BEGIN Read_Lidar */
 
-    uint8_t L_D = 0;
-    uint8_t R_D = 0;
-    uint8_t ret1= VL6180X_Init(0);
-    uint8_t ret2 = VL6180X_Init(1);
-    printf("VL START!");
+//    uint8_t L_D = 0;
+//    uint8_t R_D = 0;
+//    uint8_t ret1= VL6180X_Init(0);
+//    uint8_t ret2 = VL6180X_Init(1);
+//    printf("VL START!");
     /* Infinite loop */
     for(;;)
     {
         //L_D = VL6180X_Read_Range(0);
-        R_D = VL6180X_Read_Range(1);
+//        R_D = VL6180X_Read_Range(1);
 
-        printf("LD: %d",L_D);
-        printf("R_D: %d",R_D);
+//        printf("LD: %d",L_D);
+//        printf("R_D: %d",R_D);
 
         vTaskDelay(pdMS_TO_TICKS(20));
     }
@@ -275,11 +283,37 @@ void Read_Lidar(void *argument)
 void Move_Control(void *argument)
 {
   /* USER CODE BEGIN Move_Control */
-    /* Infinite loop */
+    
+	/* Infinite loop */
     for(;;)
     {
+		MotorSpeed_Get();
+		Car_stat.LEFT_MOTOR = LEFT_MOTOR;
+		Car_stat.RIG_MOTOR = RIG_MOTOR;
+		
+		if(move_task_stat.AHEAD_FLAG){
+		
+			vTaskDelay(pdMS_TO_TICKS(50));
 
-        vTaskDelay(pdMS_TO_TICKS(20));
+		}
+		
+		else if(move_task_stat.TURN_FLAG){
+				vTaskDelay(pdMS_TO_TICKS(50));
+
+		}
+		
+		else if(move_task_stat.STOP_FLAG){
+				vTaskDelay(pdMS_TO_TICKS(50));
+
+		}
+		
+		else if(move_task_stat.DIS_FLAG){
+				vTaskDelay(pdMS_TO_TICKS(50));
+
+		}
+		
+		
+		
     }
   /* USER CODE END Move_Control */
 }

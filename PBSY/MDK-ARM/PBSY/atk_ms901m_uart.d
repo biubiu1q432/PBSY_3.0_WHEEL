@@ -30,4 +30,6 @@ pbsy\atk_ms901m_uart.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 pbsy\atk_ms901m_uart.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 pbsy\atk_ms901m_uart.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
 pbsy\atk_ms901m_uart.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
+pbsy\atk_ms901m_uart.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+pbsy\atk_ms901m_uart.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
 pbsy\atk_ms901m_uart.o: ../Core/Inc/usart.h

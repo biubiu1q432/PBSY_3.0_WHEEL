@@ -31,6 +31,8 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stdio.h"
+#include <stdbool.h>
 
 /* USER CODE END Includes */
 
@@ -117,9 +119,18 @@ void Error_Handler(void);
 /* USER CODE BEGIN Private defines */
 
 
+typedef struct
+{
+	bool AHEAD_FLAG;
+	bool STOP_FLAG;
+	bool TURN_FLAG;
+	bool DIS_FLAG;
+
+} MOVE_TASK_STAT;
+
 
 //UART
-#define UART_PRINT 2
+#define UART_PRINT 4
 
 //PWM
 #define MAX_PWM 1000
@@ -137,6 +148,9 @@ void Error_Handler(void);
 
 //MPU
 #define MPU_MAX_WAIT 15
+
+//CARD
+#define CARD_DATA_SIZE 20
 
 /* USER CODE END Private defines */
 
