@@ -50,6 +50,10 @@
 /* USER CODE BEGIN PV */
 uint8_t mpu_once_isr_data;
 uint8_t TEST;
+uint8_t CARD_DATA[CARD_DATA_SIZE];
+
+extern DMA_HandleTypeDef hdma_usart1_rx;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -110,6 +114,8 @@ int main(void)
     HAL_UART_Receive_IT(&huart2,&TEST,1);//serial
     HAL_UART_Receive_IT(&huart5,&mpu_once_isr_data,1);//mpu
     HAL_UART_Receive_IT(&huart4,&TEST,1);//DEBUG
+	HAL_UARTEx_ReceiveToIdle_DMA(&huart1,CARD_DATA,sizeof(CARD_DATA));//CARD
+	__HAL_DMA_DISABLE_IT(&hdma_usart1_rx,DMA_IT_HT);
 
 
     HAL_TIM_Encoder_Start(&htim1,TIM_CHANNEL_ALL);//编码器
@@ -118,7 +124,7 @@ int main(void)
     HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
     HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_4);
-	
+
 
   /* USER CODE END 2 */
 

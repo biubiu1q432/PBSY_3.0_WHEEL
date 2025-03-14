@@ -1,0 +1,134 @@
+
+#include "vl6180x.h"
+#include "main.h"
+#include <string.h>
+#include <stdio.h>
+#include "MyI2C.h"
+#include "i2c.h"
+extern I2C_HandleTypeDef hi2c2;
+
+
+//0:等待上线 1:开始测量发送中 	2.开始测量发送完成	3:等待响应 	4.响应完成	5：读取距离发送中  6.读取完成 7.消除中断发送中 8.消除中断完成
+uint8_t lidar_stat = 0;
+
+uint8_t range = 0;
+uint8_t isReady = 0;
+uint8_t isAsk = 0;
+
+//等待上线
+void VL6180X_isReady(void){
+	isReady  = VL6180X_ReadReg(VL6180X_REG_RESULT_RANGE_STATUS);
+}
+
+//开始测量
+void VL6180X_TrigMeasure(void){
+	static uint8_t reg_start = 0x01;
+	VL6180X_WriteReg(VL6180X_REG_SYSRANGE_START,reg_start);
+}
+
+//等待响应
+void VL6180X_Ask(void){
+	isAsk = VL6180X_ReadReg(VL6180X_REG_RESULT_INTERRUPT_STATUS_GPIO);
+}
+
+//读取距离并消除中断
+void VL6180X_GetRange(void){
+	static uint8_t clear_interrupt = 0x07;
+	range = VL6180X_ReadReg(VL6180X_REG_RESULT_RANGE_VAL);
+	VL6180X_WriteReg(VL6180X_REG_SYSTEM_INTERRUPT_CLEAR,clear_interrupt);
+
+}
+
+void VL6180X_StatReadRange(void){
+	
+	//等待上线
+	if(lidar_stat == 0){
+		VL6180X_isReady();
+	}
+	
+	//开始测量
+	else if(lidar_stat == 1){
+		VL6180X_TrigMeasure();
+	}
+	
+	//等待响应
+	else if(lidar_stat == 2){
+		VL6180X_Ask();
+		
+	}
+	
+	//读取距离并消除中断
+	else if(lidar_stat == 3){
+		VL6180X_GetRange();
+		
+	}
+	else if(lidar_stat == 3){
+		VL6180X_GetRange();
+		
+	}
+		else if(lidar_stat == 3){
+		VL6180X_GetRange();
+		
+	}
+			else if(lidar_stat == 3){
+		VL6180X_GetRange();
+		
+	}
+				else if(lidar_stat == 3){
+		VL6180X_GetRange();
+		
+	}
+					else if(lidar_stat == 3){
+		VL6180X_GetRange();
+		
+	}
+						else if(lidar_stat == 3){
+		VL6180X_GetRange();
+		
+	}
+
+}
+
+
+
+//uint8_t VL6180X_Read_Range(void)
+//{
+//	uint8_t range = 0;
+//	while(!(VL6180X_ReadReg(VL6180X_REG_RESULT_RANGE_STATUS) & 0x01));
+//	VL6180X_WriteReg(VL6180X_REG_SYSRANGE_START,0x01);
+//	while(!(VL6180X_ReadReg(VL6180X_REG_RESULT_INTERRUPT_STATUS_GPIO) & 0x04));
+//	range = VL6180X_ReadReg(VL6180X_REG_RESULT_RANGE_VAL);
+//	VL6180X_WriteReg(VL6180X_REG_SYSTEM_INTERRUPT_CLEAR,0x07);
+
+//	return range;
+//}
+
+
+uint8_t VL6180X_WriteReg(uint16_t reg,uint8_t data)
+{
+	//HAL_I2C_Mem_Write_DMA(&hi2c2,(VL6180X_DEFAULT_I2C_ADDR<<1)|0,reg,I2C_MEMADD_SIZE_16BIT,&data,1);	
+	HAL_I2C_Mem_Write_IT(&hi2c2,(VL6180X_DEFAULT_I2C_ADDR<<1)|0,reg,I2C_MEMADD_SIZE_16BIT,&data,1);
+	//HAL_I2C_Mem_Write(&hi2c2,(VL6180X_DEFAULT_I2C_ADDR<<1)|0,reg,I2C_MEMADD_SIZE_16BIT,&data,1,0xff);
+	return 0;
+}
+uint8_t VL6180X_ReadReg(uint16_t reg)
+{ 
+	uint8_t data;
+	//HAL_I2C_Mem_Read(&hi2c2,(VL6180X_DEFAULT_I2C_ADDR<<1)|1,reg,I2C_MEMADD_SIZE_16BIT,&data,1,0xff);
+	HAL_I2C_Mem_Read_IT(&hi2c2,(VL6180X_DEFAULT_I2C_ADDR<<1)|1,reg,I2C_MEMADD_SIZE_16BIT,&data,1);
+	//HAL_I2C_Mem_Read_DMA(&hi2c2,(VL6180X_DEFAULT_I2C_ADDR<<1)|1,reg,I2C_MEMADD_SIZE_16BIT,&data,1);
+	return data;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

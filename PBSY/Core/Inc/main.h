@@ -128,6 +128,18 @@ typedef struct
 
 } MOVE_TASK_STAT;
 
+//Lidar
+typedef struct
+{
+	float Lef_Cali;
+	float Rig_Cali;
+
+	uint8_t LefLidar;
+	uint8_t RigLidar;
+
+} Lidar;
+
+#define CAILBRATION_DIS 4
 
 //UART
 #define UART_PRINT 4
@@ -143,14 +155,23 @@ typedef struct
 #define LEFT_EC_1	1400			
 #define RIGHT_EC_1	1400				
 #define PI		3.1415926			
-#define D		65						
+#define D		6.5						
 #define C_1		PI*D		
 
 //MPU
 #define MPU_MAX_WAIT 15
+#define FILTER_RANGE 10
 
 //CARD
 #define CARD_DATA_SIZE 20
+
+//PID
+#define ALLOW_ERR_DIS 0.5
+
+//°ë¾¶
+#define CAR_RANGE 6.5
+
+
 
 /* USER CODE END Private defines */
 

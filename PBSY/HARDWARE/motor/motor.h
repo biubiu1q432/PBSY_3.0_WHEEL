@@ -8,16 +8,16 @@
 
 typedef struct
 {
-	int EncodeCount;
 	float Distance;
 	float Motorspeed;
 } Motor_Stat;
 
 
 typedef struct{
-	 Motor_Stat LEFT_MOTOR;
-	 Motor_Stat RIG_MOTOR;
+	 float Car_omiga;
+	 float Car_Speed;
 	 float Car_Alpha;
+	 float Car_Dis;
 }CAR_STAT;
 
 
@@ -25,7 +25,11 @@ typedef struct{
 void Motor_Set(float Left_PWM,float Right_PWM);
 
 //EC
-void MotorSpeed_Get(void);
+void CarStat_Get(void);
+
+//car
+void Car_Stat_init(void);
+
 
 #endif
 

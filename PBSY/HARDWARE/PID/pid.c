@@ -1,0 +1,240 @@
+#include "pid.h"
+#include "tim.h"
+#include "motor.h"
+
+//位置
+Pid local_pid;
+//增量
+Pid left_incremental_pid;
+Pid right_incremental_pid;
+//mpu
+Pid mpu_pid;
+
+extern Motor_Stat LEFT_MOTOR;	/*左轮数据*/
+extern Motor_Stat RIG_MOTOR;	/*右轮数据*/
+extern CAR_STAT Car_stat;
+
+
+double test = 0;
+
+//给结构体类型变量赋初值
+void PID_init()
+{
+	//位置式
+	local_pid.target_dis=0.000;
+	local_pid.actual_dis=0.000;
+	local_pid.output_val=0.000;
+	local_pid.err=0.000;
+	local_pid.err_last=0.000;
+	local_pid.err_sum=0.000;
+	local_pid.Kp=3.7;
+	local_pid.Ki=0.02;
+	local_pid.Kd=0.5;
+
+	
+	//增量式
+	left_incremental_pid.actual_val=0.000;
+	left_incremental_pid.target_val=0.000;
+	left_incremental_pid.output_pwm=0.000;	
+	left_incremental_pid.err=0.000;
+	left_incremental_pid.err_last=0.000;
+	left_incremental_pid.err_pre=0.000;
+	left_incremental_pid.err_sum=0.000;
+	left_incremental_pid.Kp=2.5;
+	left_incremental_pid.Ki=0.001;
+	left_incremental_pid.Kd=3;
+
+	right_incremental_pid.actual_val=0.000;
+	right_incremental_pid.target_val=0.000;
+	right_incremental_pid.output_pwm=0.000;	
+	right_incremental_pid.err=0.000;
+	right_incremental_pid.err_last=0.000;
+	right_incremental_pid.err_pre=0.000;
+	right_incremental_pid.err_sum=0.000;
+	right_incremental_pid.Kp=2.5;
+	right_incremental_pid.Ki=0.001;
+	right_incremental_pid.Kd=3;
+	
+	//mpu
+	mpu_pid.target_sita=0.000;
+	mpu_pid.actual_sita=0.000;
+	mpu_pid.output_sita_val=0.000;
+	mpu_pid.err=0.000;
+	mpu_pid.err_last=0.000;
+	mpu_pid.err_pre=0.000;
+	mpu_pid.err_sum=0.000;
+	mpu_pid.Kp=0.15;
+	mpu_pid.Ki=0.0001;
+	mpu_pid.Kd=0.015;
+
+}
+
+
+/**************************************************************************
+@bref: Motor_Set_Sita
+@para	：目标距离target_dis，限速（恒正）range_val
+@return: void
+**************************************************************************/
+uint8_t Motor_Set_Sita(float target_sita,float actual_sita,float range_val)
+{
+
+	mpu_pid.target_sita = target_sita;
+	float val=PID_realize_mpu(&mpu_pid,actual_sita);
+		
+	
+	//over
+	if(mpu_pid.err>=0 && mpu_pid.err < 1){
+		Motor_Set(0,0);
+		PID_init();
+		return 0;
+	}
+	if(mpu_pid.err<0 && mpu_pid.err > -1){
+		Motor_Set(0,0);
+		PID_init();
+		return 0;
+	}
+	
+	//限幅
+	if(val >= range_val && range_val>=0)val=range_val;
+	if(val <= -range_val && range_val<0)val=-range_val;
+
+	Motor_Set_Val(-val,val);
+	
+	return 1;
+
+}
+
+
+
+/**************************************************************************
+@bref: Motor_Set_Dis
+@para	：目标距离target_dis，限速（恒正）range_val
+@return: void
+**************************************************************************/
+uint8_t Motor_Set_Dis(float target_dis,float range_val)
+{
+
+	local_pid.target_dis  = target_dis;
+	float acual_dis = Car_stat.Car_Dis;
+	
+	//over
+	float judge = (target_dis - acual_dis);
+	if(judge> 0 && judge <= ALLOW_ERR_DIS){
+			Motor_Set(0,0);
+			PID_init();
+			return 0;
+	}
+	if(judge<0 &&  judge>=-ALLOW_ERR_DIS){
+		Motor_Set(0,0);
+		PID_init();
+		return 0;
+	}
+	
+	float val = PID_realize_dis(&local_pid,acual_dis);
+	
+
+	//限幅
+	if(target_dis >= 0 ){
+		if(val > range_val) val = range_val;
+	}
+	if(target_dis < 0 ){
+		if(val < -range_val) val = -range_val;
+	}
+	
+	Motor_Set_Val(val,val);
+	return 1;
+
+}
+
+ 
+/**************************************************************************
+@bref: Motor_Set_Val
+@para	：left_val,right_val
+@return: void
+**************************************************************************/
+void Motor_Set_Val(float left_val,float right_val)
+{
+		float left_pwm,right_pwm;
+		//目标赋值
+		left_incremental_pid.target_val = left_val;
+		right_incremental_pid.target_val = right_val;
+		//速度环计算
+		left_pwm = Incremental_PID_val(&left_incremental_pid,LEFT_MOTOR.Motorspeed);
+		right_pwm = Incremental_PID_val(&right_incremental_pid,RIG_MOTOR.Motorspeed);
+		
+
+	
+		//pwm
+		Motor_Set(left_pwm,right_pwm);
+}
+
+
+
+
+/**************************************************************************
+@bref: 位置式PID控制器
+@para	：当前位置	pid->actual_dis
+@return: 指定速度	pid->output_val
+**************************************************************************/
+
+float PID_realize_dis(Pid * pid,float actual_dis)
+{
+	pid->actual_dis = actual_dis;//传递真实值
+	pid->err = pid->target_dis - pid->actual_dis;////当前误差=目标值-真实值		
+	pid->err_sum += pid->err;//误差累计值 = 当前误差累计和
+	//使用PID控制 输出 = Kp*当前误差  +  Ki*误差累计值 + Kd*(当前误差-上次误差)
+	pid->output_val = pid->Kp*pid->err + pid->Ki*pid->err_sum + pid->Kd*(pid->err - pid->err_last);	
+	//保存上次误差: 这次误差赋值给上次误差
+	pid->err_last = pid->err;
+	
+	//限幅
+	if(pid->output_val < 0.5 && pid->output_val > 0) pid->output_val = 0;
+	if(pid->output_val > -0.5 && pid->output_val < 0) pid->output_val = 0;
+	
+	return pid->output_val;
+}
+
+
+float PID_realize_mpu(Pid * pid,float sita)
+{
+	pid->actual_sita = sita;//传递真实值
+	pid->err = pid->target_sita - pid->actual_sita;////当前误差=目标值-真实值		
+	pid->err_sum += pid->err;//误差累计值 = 当前误差累计和
+	//使用PID控制 输出 = Kp*当前误差  +  Ki*误差累计值 + Kd*(当前误差-上次误差)
+	pid->output_sita_val = pid->Kp*pid->err + pid->Ki*pid->err_sum + pid->Kd*(pid->err - pid->err_last);	
+	//保存上次误差: 这次误差赋值给上次误差
+	pid->err_last = pid->err;
+		
+	return pid->output_sita_val;
+}
+
+
+
+
+
+/**************************************************************************
+函数功能：增量PID控制器
+入口参数：实际值，目标值
+返回  值：电机PWM
+根据增量式离散PID公式 
+pwm=Kp[e（k）-e(k-1)]+Ki*e(k)+Kd[e(k)-2e(k-1)+e(k-2)]		对应关系（增量式-》位置式）kp->kd ki->kp kd->ki
+e(k)代表本次偏差 
+e(k-1)代表上一次的偏差  以此类推 
+pwm代表增量输出
+**************************************************************************/
+float Incremental_PID_val(Pid * pid,float actual_val)
+{ 		
+	//计算
+	pid->actual_val = actual_val;//传递真实值 
+	pid->err = pid->target_val - pid->actual_val;//当前误差=目标值-真实值   
+	pid->output_pwm  += (pid->Kd*(pid->err - pid->err_last))               /* 比例环节 */
+									 + (pid->Kp * pid->err)                           /* 积分环节 */
+									 + (pid->Ki*(pid->err - 2*pid->err_last + pid->err_pre));  /* 微分环节 */ 
+    
+	pid->err_pre=pid->err_last;                                   /* 保存上上次偏差 */
+	pid->err_last=pid->err;	                                    /* 保存上一次偏差 */
+
+	return pid->output_pwm;                                            /* 输出结果 */
+}
+
+	

@@ -47,8 +47,12 @@ pbsy\freertos.o: ../HARDWARE/ATK_MS901M/atk_ms901m.h
 pbsy\freertos.o: ../HARDWARE/ATK_MS901M/atk_ms901m_uart.h
 pbsy\freertos.o: ../HARDWARE/math/math.h
 pbsy\freertos.o: ../HARDWARE/vl6180x/vl6180x.h
+pbsy\freertos.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+pbsy\freertos.o: ../HARDWARE/vl6180x/MyI2C.h
+pbsy\freertos.o: ../Core/Inc/i2c.h
 pbsy\freertos.o: ../Core/Inc/tim.h
 pbsy\freertos.o: ../HARDWARE/motor/motor.h
 pbsy\freertos.o: ../Core/Inc/dma.h
 pbsy\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h
 pbsy\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h
+pbsy\freertos.o: ../HARDWARE/PID/pid.h

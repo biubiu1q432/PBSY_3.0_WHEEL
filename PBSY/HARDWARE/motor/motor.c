@@ -1,5 +1,7 @@
 #include "motor.h"
 
+extern CAR_STAT Car_stat;
+
 Motor_Stat LEFT_MOTOR;
 Motor_Stat RIG_MOTOR;
 
@@ -63,25 +65,36 @@ void Motor_Set(float Left_PWM,float Right_PWM)
 @para	£ºvoid
 @return: void
 **************************************************************************/
-void MotorSpeed_Get(void){
+void CarStat_Get(void){
 		
 	int left_ec = __HAL_TIM_GET_COUNTER(&htim1);
 	__HAL_TIM_SET_COUNTER(&htim1,0);
 	if(left_ec > 60000)	left_ec = left_ec - EC_ARR;
-	LEFT_MOTOR.EncodeCount = left_ec;
-	float left_distance = (float)(LEFT_MOTOR.EncodeCount/LEFT_EC_1)*C_1;
+	float left_distance = (left_ec/(float)LEFT_EC_1)*C_1;
 	LEFT_MOTOR.Distance += left_distance;
 	LEFT_MOTOR.Motorspeed = left_distance/ENCODER_TIME;
 
 	int right_ec = __HAL_TIM_GET_COUNTER(&htim2);
 	__HAL_TIM_SET_COUNTER(&htim2,0);		
 	if(right_ec > 60000)	right_ec = right_ec - EC_ARR;
-	RIG_MOTOR.EncodeCount = -right_ec;	
-	float right_distance = ((float)RIG_MOTOR.EncodeCount/(float)RIGHT_EC_1)*C_1;
+	float right_distance = (right_ec/(float)RIGHT_EC_1)*C_1;
 	RIG_MOTOR.Distance += right_distance;
 	RIG_MOTOR.Motorspeed = right_distance/ENCODER_TIME;
+	
+	Car_stat.Car_Speed = (RIG_MOTOR.Motorspeed + LEFT_MOTOR.Motorspeed)/2.0f;
+	Car_stat.Car_Dis = (LEFT_MOTOR.Distance + RIG_MOTOR.Distance)/2.000;
+	Car_stat.Car_omiga = (float)Car_stat.Car_Speed/CAR_RANGE;
 
 }
+
+void Car_Stat_init(void)
+{
+	Car_stat.Car_Alpha = 0;
+	Car_stat.Car_Dis = 0;
+	
+}
+
+
 
 
 

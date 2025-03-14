@@ -3,13 +3,6 @@
 #define __VL180X_H
 
 #include "main.h"
-#include <string.h>
-#include <stdio.h>
-#include "MyI2C.h"
-#include "i2c.h"
-
-
-
 
 #define	VL6180X_DEFAULT_ID						0xB4
 //#define I2C_DEBUG
@@ -68,13 +61,20 @@
 
 
 
-uint8_t VL6180X_WriteReg(uint16_t reg,uint8_t data,uint8_t Turn);
-uint8_t VL6180X_ReadReg(uint16_t RegAddress,uint8_t Turn);
-uint8_t VL6180X_Init(uint8_t Turn);
-uint8_t VL6180X_Read_ID(uint8_t Turn);
-uint8_t VL6180X_Read_Range(uint8_t Turn);
-void VL6180X_Range_Cailbration(Lidar *lidar,int Cailbration_dis,uint8_t repit);
+uint8_t VL6180X_WriteReg(uint16_t reg,uint8_t data);
+uint8_t VL6180X_ReadReg(uint16_t RegAddress);
+uint8_t VL6180X_Init(void);
+uint8_t VL6180X_Read_ID(void);
+uint8_t VL6180X_Read_Range(void);
 
+
+
+void VL6180X_isReady(void);
+void VL6180X_TrigMeasure(void);
+void VL6180X_Ask(void);
+void VL6180X_GetRange(void);
+void VL6180X_StatReadRange(void);
+	
 
 
 

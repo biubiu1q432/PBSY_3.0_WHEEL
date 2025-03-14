@@ -41,6 +41,7 @@
 "pbsy\math.o"
 "pbsy\vl6180x.o"
 "pbsy\motor.o"
+"pbsy\pid.o"
 "pbsy\delay.o"
 --library_type=microlib --strict --scatter "PBSY\PBSY.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols

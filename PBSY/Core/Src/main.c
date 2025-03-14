@@ -25,6 +25,7 @@
 #include "usart.h"
 #include "gpio.h"
 
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -114,8 +115,8 @@ int main(void)
     HAL_UART_Receive_IT(&huart2,&TEST,1);//serial
     HAL_UART_Receive_IT(&huart5,&mpu_once_isr_data,1);//mpu
     HAL_UART_Receive_IT(&huart4,&TEST,1);//DEBUG
-	HAL_UARTEx_ReceiveToIdle_DMA(&huart1,CARD_DATA,sizeof(CARD_DATA));//CARD
-	__HAL_DMA_DISABLE_IT(&hdma_usart1_rx,DMA_IT_HT);
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart1,CARD_DATA,sizeof(CARD_DATA));//CARD
+    __HAL_DMA_DISABLE_IT(&hdma_usart1_rx,DMA_IT_HT);
 
 
     HAL_TIM_Encoder_Start(&htim1,TIM_CHANNEL_ALL);//编码器
@@ -206,7 +207,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM7) {
+  if (htim->Instance == TIM7)
+  {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
