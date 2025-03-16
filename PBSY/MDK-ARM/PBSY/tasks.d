@@ -14,3 +14,4 @@ pbsy\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h
 pbsy\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h
 pbsy\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h
 pbsy\tasks.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/stack_macros.h
+pbsy\tasks.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h

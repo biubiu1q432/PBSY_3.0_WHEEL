@@ -5,23 +5,23 @@ extern I2C_HandleTypeDef hi2c1;
 
 /*
 @breif  距离标定
-@parm	uint8_t Cailbration_dis 固定标定距离 uint8_t repit 重复次数
+@parm	float Cailbration_dis 固定标定距离 uint8_t repit 重复次数
 */
 void VL6180X_Range_Cailbration(Lidar *lidar,int Cailbration_dis,uint8_t repit){
-	uint8_t sum;
-	float dis;
+	
+	int sum=0;
+	int dis=0;
 	
 	for(int i = 1;i<=repit;i++) sum += VL6180X_Read_Range(1);
-	dis = (float)sum/repit;
+	dis = sum/repit;
 	lidar->Lef_Cali = dis - Cailbration_dis;
+		
+	sum= 0;
 	
 	for(int i = 1;i<=repit;i++) sum += VL6180X_Read_Range(2);
-	dis = (float)sum/repit;
+	dis = sum/repit;
 	lidar->Rig_Cali = dis - Cailbration_dis;
 }
-
-
-
 
 
 
@@ -91,10 +91,13 @@ uint8_t VL6180X_Init(uint8_t Turn)
 
 
 
+
 uint8_t VL6180X_Read_ID(uint8_t Turn)
 {
 	return VL6180X_ReadReg(VL6180X_REG_IDENTIFICATION_MODEL_ID,Turn);
 }
+
+
 
 
 uint8_t VL6180X_Read_Range(uint8_t Turn)
@@ -124,15 +127,6 @@ uint8_t VL6180X_ReadReg(uint16_t reg,uint8_t Turn)
 	else if(Turn == 1)HAL_I2C_Mem_Read(&hi2c1,(VL6180X_DEFAULT_I2C_ADDR<<1)|1,reg,I2C_MEMADD_SIZE_16BIT,&data,1,10);
 	return data;
 }
-
-
-
-
-
-
-
-
-
 
 
 

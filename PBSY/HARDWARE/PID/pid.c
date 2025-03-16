@@ -9,10 +9,13 @@ Pid left_incremental_pid;
 Pid right_incremental_pid;
 //mpu
 Pid mpu_pid;
+//激光
+Pid Lidar_pid;
 
 extern Motor_Stat LEFT_MOTOR;	/*左轮数据*/
 extern Motor_Stat RIG_MOTOR;	/*右轮数据*/
 extern CAR_STAT Car_stat;
+extern Lidar lidar;
 
 
 double test = 0;
@@ -67,15 +70,156 @@ void PID_init()
 	mpu_pid.Ki=0.0001;
 	mpu_pid.Kd=0.015;
 
+
+	Lidar_pid.target_dis=0.000;
+	Lidar_pid.actual_dis=0.000;
+	Lidar_pid.output_val=0.000;
+	Lidar_pid.err=0.000;
+	Lidar_pid.err_last=0.000;
+	Lidar_pid.err_sum=0.000;
+	Lidar_pid.Kp=0;
+	Lidar_pid.Ki=0;
+	Lidar_pid.Kd=0;
+
+
 }
 
 
 /**************************************************************************
-@bref: Motor_Set_Sita
-@para	：目标距离target_dis，限速（恒正）range_val
-@return: void
+@bref    走直线（mpu + lidar + ec）
+@para	 恒定速度： float val
+@return 
 **************************************************************************/
-uint8_t Motor_Set_Sita(float target_sita,float actual_sita,float range_val)
+uint8_t CarGoAhead(float val)
+{
+	float val_mpu;
+	float val_lidar;
+	float l_val;
+	float r_val;
+	
+	//over--》激光突变
+	
+	
+	//角度环--》维持当前角度
+	mpu_pid.target_sita = 0;
+	val_mpu=PID_realize_mpu(&mpu_pid,Car_stat.Car_Alpha);
+	
+	//激光环--》维持当前角度
+	val_lidar = PID_realize_lidar(&Lidar_pid);
+	
+	
+	//速度环--> VAL = 基础速度 + K1 * 陀螺仪修正 + k2 * 激光修正
+	l_val = val - val_mpu * MPU_WEIGHT_FOR_VAL - val_lidar *  LIDAR_WEIGHT_FOR_VAL;
+	r_val = val + val_mpu * MPU_WEIGHT_FOR_VAL + val_lidar *  LIDAR_WEIGHT_FOR_VAL;
+	
+	return 1;
+
+}
+
+/**************************************************************************
+@bref    DEBUG：lidar走直线（lidar + ec）
+@para	 恒定速度： float val
+@return 
+**************************************************************************/
+uint8_t CarGoAhead_Lidar(float val)
+{
+	float val_lidar;
+	float l_val;
+	float r_val;
+	
+	//over--》激光突变
+	
+	
+	//激光环--》维持当前角度
+	val_lidar = PID_realize_lidar(&Lidar_pid);
+
+	l_val = val - val_lidar  ;
+	r_val = val + val_lidar  ;
+	
+	Motor_Set_Val(l_val,r_val);
+	
+	return 1;
+
+}
+
+
+
+/**************************************************************************
+@bref    DEBUG：mpu走直线（mpu + ec）
+@para	 恒定速度： float val
+@return 
+**************************************************************************/
+uint8_t CarGoAhead_MPU(float val)
+{
+	float val_mpu;
+	float l_val;
+	float r_val;
+	
+	//over--》激光突变
+	
+	//角度环--》维持当前角度
+	mpu_pid.target_sita = 0;
+	val_mpu=PID_realize_mpu(&mpu_pid,Car_stat.Car_Alpha);
+	
+	l_val = val - val_mpu  ;
+	r_val = val + val_mpu  ;
+	
+	Motor_Set_Val(l_val,r_val);
+
+	return 1;
+
+}
+
+/**************************************************************************
+@bref: 	 走指定距离 (ec + MPU)
+@para	：目标距离target_dis，限速（恒正）range_val
+@return :  void
+**************************************************************************/
+uint8_t CarSetDis(float target_dis,float range_val)
+{
+
+	local_pid.target_dis  = target_dis;
+	float acual_dis	= Car_stat.Car_Dis;
+	
+	//over
+	float judge = (target_dis - acual_dis);
+	if(judge> 0 && judge <= ALLOW_ERR_DIS){
+		Motor_Set(0,0);
+		PID_init();
+		return 0;
+	}
+	if(judge<0 &&  judge>=-ALLOW_ERR_DIS){
+		Motor_Set(0,0);
+		PID_init();
+		return 0;
+	}
+	
+	//位置环
+	float val = PID_realize_dis(&local_pid,acual_dis);
+	//角度环
+	mpu_pid.target_sita = 0;
+	float val_mpu  = PID_realize_mpu(&mpu_pid,Car_stat.Car_Alpha);
+	
+	//限幅
+	if(target_dis >= 0 ){
+		if(val > range_val) val = range_val;
+	}
+	if(target_dis < 0 ){
+		if(val < -range_val) val = -range_val;
+	}
+	
+	Motor_Set_Val(val-val_mpu,val+val_mpu);
+	return 1;
+
+}
+
+
+/**************************************************************************
+@bref   ：转向 (mpu + ec)
+@para	：目标距离target_dis，限速（恒正）range_val
+@return :  void
+**************************************************************************/
+uint8_t CarTurn(float target_sita,float actual_sita,float range_val)
 {
 
 	mpu_pid.target_sita = target_sita;
@@ -83,12 +227,12 @@ uint8_t Motor_Set_Sita(float target_sita,float actual_sita,float range_val)
 		
 	
 	//over
-	if(mpu_pid.err>=0 && mpu_pid.err < 1){
+	if(mpu_pid.err>=0 && mpu_pid.err < ALLOW_ERR_SITA){
 		Motor_Set(0,0);
 		PID_init();
 		return 0;
 	}
-	if(mpu_pid.err<0 && mpu_pid.err > -1){
+	if(mpu_pid.err<0 && mpu_pid.err > -ALLOW_ERR_SITA){
 		Motor_Set(0,0);
 		PID_init();
 		return 0;
@@ -103,52 +247,9 @@ uint8_t Motor_Set_Sita(float target_sita,float actual_sita,float range_val)
 	return 1;
 
 }
-
-
-
-/**************************************************************************
-@bref: Motor_Set_Dis
-@para	：目标距离target_dis，限速（恒正）range_val
-@return: void
-**************************************************************************/
-uint8_t Motor_Set_Dis(float target_dis,float range_val)
-{
-
-	local_pid.target_dis  = target_dis;
-	float acual_dis = Car_stat.Car_Dis;
-	
-	//over
-	float judge = (target_dis - acual_dis);
-	if(judge> 0 && judge <= ALLOW_ERR_DIS){
-			Motor_Set(0,0);
-			PID_init();
-			return 0;
-	}
-	if(judge<0 &&  judge>=-ALLOW_ERR_DIS){
-		Motor_Set(0,0);
-		PID_init();
-		return 0;
-	}
-	
-	float val = PID_realize_dis(&local_pid,acual_dis);
-	
-
-	//限幅
-	if(target_dis >= 0 ){
-		if(val > range_val) val = range_val;
-	}
-	if(target_dis < 0 ){
-		if(val < -range_val) val = -range_val;
-	}
-	
-	Motor_Set_Val(val,val);
-	return 1;
-
-}
-
  
 /**************************************************************************
-@bref: Motor_Set_Val
+@bref: 速度环 
 @para	：left_val,right_val
 @return: void
 **************************************************************************/
@@ -161,14 +262,9 @@ void Motor_Set_Val(float left_val,float right_val)
 		//速度环计算
 		left_pwm = Incremental_PID_val(&left_incremental_pid,LEFT_MOTOR.Motorspeed);
 		right_pwm = Incremental_PID_val(&right_incremental_pid,RIG_MOTOR.Motorspeed);
-		
-
-	
-		//pwm
+		//pwm + 限幅
 		Motor_Set(left_pwm,right_pwm);
 }
-
-
 
 
 /**************************************************************************
@@ -179,8 +275,11 @@ void Motor_Set_Val(float left_val,float right_val)
 
 float PID_realize_dis(Pid * pid,float actual_dis)
 {
+	/*********************/
 	pid->actual_dis = actual_dis;//传递真实值
 	pid->err = pid->target_dis - pid->actual_dis;////当前误差=目标值-真实值		
+	/*********************/
+	
 	pid->err_sum += pid->err;//误差累计值 = 当前误差累计和
 	//使用PID控制 输出 = Kp*当前误差  +  Ki*误差累计值 + Kd*(当前误差-上次误差)
 	pid->output_val = pid->Kp*pid->err + pid->Ki*pid->err_sum + pid->Kd*(pid->err - pid->err_last);	
@@ -197,8 +296,11 @@ float PID_realize_dis(Pid * pid,float actual_dis)
 
 float PID_realize_mpu(Pid * pid,float sita)
 {
+	/*********************/
 	pid->actual_sita = sita;//传递真实值
 	pid->err = pid->target_sita - pid->actual_sita;////当前误差=目标值-真实值		
+	/*********************/
+	
 	pid->err_sum += pid->err;//误差累计值 = 当前误差累计和
 	//使用PID控制 输出 = Kp*当前误差  +  Ki*误差累计值 + Kd*(当前误差-上次误差)
 	pid->output_sita_val = pid->Kp*pid->err + pid->Ki*pid->err_sum + pid->Kd*(pid->err - pid->err_last);	
@@ -209,7 +311,21 @@ float PID_realize_mpu(Pid * pid,float sita)
 }
 
 
+float PID_realize_lidar(Pid * pid)
+{
+	/*********************/
+	pid->actual_dis = lidar.LefLidar - lidar.RigLidar;
+	pid->target_dis = 0;
+	/*********************/
+	
+	pid->err_sum += pid->err;//误差累计值 = 当前误差累计和
+	//使用PID控制 输出 = Kp*当前误差  +  Ki*误差累计值 + Kd*(当前误差-上次误差)
+	pid->output_val = pid->Kp*pid->err + pid->Ki*pid->err_sum + pid->Kd*(pid->err - pid->err_last);	
+	//保存上次误差: 这次误差赋值给上次误差
+	pid->err_last = pid->err;
 
+	return pid->output_val;
+}
 
 
 /**************************************************************************

@@ -17,6 +17,7 @@ typedef struct{
 	 float Car_omiga;
 	 float Car_Speed;
 	 float Car_Alpha;
+	 float Car_LastAlpha;
 	 float Car_Dis;
 }CAR_STAT;
 
@@ -28,8 +29,7 @@ void Motor_Set(float Left_PWM,float Right_PWM);
 void CarStat_Get(void);
 
 //car
-void Car_Stat_init(void);
-
+void Car_Stat_ReFresh(void);
 
 #endif
 

@@ -119,6 +119,7 @@ void Error_Handler(void);
 /* USER CODE BEGIN Private defines */
 
 
+//MOVE
 typedef struct
 {
 	bool AHEAD_FLAG;
@@ -127,19 +128,22 @@ typedef struct
 	bool DIS_FLAG;
 
 } MOVE_TASK_STAT;
+#define MPU_WEIGHT_FOR_VAL 0.5
+#define LIDAR_WEIGHT_FOR_VAL 0.05
+
 
 //Lidar
 typedef struct
 {
-	float Lef_Cali;
-	float Rig_Cali;
+	int Lef_Cali;
+	int Rig_Cali;
 
 	uint8_t LefLidar;
 	uint8_t RigLidar;
 
 } Lidar;
-
-#define CAILBRATION_DIS 4
+#define CAILBRATION_DIS 50
+#define CAILBRATION_REPIT 30
 
 //UART
 #define UART_PRINT 4
@@ -151,7 +155,7 @@ typedef struct
 
 //EC
 #define EC_ARR	65535		
-#define ENCODER_TIME 0.050	
+#define ENCODER_TIME 0.050
 #define LEFT_EC_1	1400			
 #define RIGHT_EC_1	1400				
 #define PI		3.1415926			
@@ -161,15 +165,23 @@ typedef struct
 //MPU
 #define MPU_MAX_WAIT 15
 #define FILTER_RANGE 10
+#define MPU_ISR_TRIG 1
+
 
 //CARD
 #define CARD_DATA_SIZE 20
 
 //PID
 #define ALLOW_ERR_DIS 0.5
+#define ALLOW_ERR_SITA 0.5
 
-//�뾶
-#define CAR_RANGE 6.5
+
+//Radius
+#define RADIUS 6.5
+
+//分速度夹角sin
+#define SINANGLE 0.5
+
 
 
 

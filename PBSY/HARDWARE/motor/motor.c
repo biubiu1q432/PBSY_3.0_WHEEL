@@ -81,17 +81,23 @@ void CarStat_Get(void){
 	RIG_MOTOR.Distance += right_distance;
 	RIG_MOTOR.Motorspeed = right_distance/ENCODER_TIME;
 	
+	
+	//Car_Stat
 	Car_stat.Car_Speed = (RIG_MOTOR.Motorspeed + LEFT_MOTOR.Motorspeed)/2.0f;
-	Car_stat.Car_Dis = (LEFT_MOTOR.Distance + RIG_MOTOR.Distance)/2.000;
-	Car_stat.Car_omiga = (float)Car_stat.Car_Speed/CAR_RANGE;
+	Car_stat.Car_Dis = (LEFT_MOTOR.Distance + RIG_MOTOR.Distance)/2.0f;
+	Car_stat.Car_omiga =( Car_stat.Car_Speed * SINANGLE ) / RADIUS;
 
 }
 
-void Car_Stat_init(void)
+
+/*
+	相对角度
+	距离重置
+*/
+void Car_Stat_ReFresh(void)
 {
-	Car_stat.Car_Alpha = 0;
+	Car_stat.Car_LastAlpha = Car_stat.Car_Alpha;
 	Car_stat.Car_Dis = 0;
-	
 }
 
 
