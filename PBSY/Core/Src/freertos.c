@@ -68,6 +68,8 @@ extern atk_ms901m_attitude_data_t attitude_dat;
 
 //Lidar
 Lidar lidar;
+int Queue_lidar[5] = { 255,255,255,255,255 }; // 初始化判断数组
+int q_size = sizeof(Queue_lidar) / sizeof(Queue_lidar[0]);
 
 //MOTOR
 extern Motor_Stat LEFT_MOTOR;
@@ -184,7 +186,8 @@ void MX_FREERTOS_Init(void) {
 
     /* Create the thread(s) */
     /* creation of GET_TASK */
-    GET_TASKHandle = osThreadNew(Get_Task, NULL, &GET_TASK_attributes);
+    
+	GET_TASKHandle = osThreadNew(Get_Task, NULL, &GET_TASK_attributes);
 
     /* creation of MPU_TASK */
     MPU_TASKHandle = osThreadNew(Read_MPU, NULL, &MPU_TASK_attributes);
@@ -197,6 +200,7 @@ void MX_FREERTOS_Init(void) {
 
     /* creation of CARD_TASK */
     CARD_TASKHandle = osThreadNew(Read_ID, NULL, &CARD_TASK_attributes);
+
 
     /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
@@ -248,7 +252,6 @@ void Read_MPU(void *argument)
         uint8_t	ret = atk_ms901m_get_attitude(&attitude_dat,MPU_MAX_WAIT);
         float tmp_sita = attitude_dat.yaw;
         Car_stat.Car_Alpha = GildeAverageValueFilter_float(tmp_sita,sita_fliter,FILTER_RANGE) - Car_stat.Car_LastAlpha;
-//        printf("%f\r\n",Car_stat.Car_Alpha);
         vTaskDelay(pdMS_TO_TICKS(20));
     }
     /* USER CODE END Read_MPU */
@@ -264,10 +267,12 @@ void Read_MPU(void *argument)
 void Read_Lidar(void *argument)
 {
     /* USER CODE BEGIN Read_Lidar */
+    
 
-    VL6180X_Init(1);
+    
+	VL6180X_Init(1);
     VL6180X_Init(2);
-    VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
+    //VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
 
     /* Infinite loop */
     for(;;)
@@ -276,9 +281,13 @@ void Read_Lidar(void *argument)
         lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
         lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
 
-        //printf("LF %d RIG %d \r\n",lidar.LefLidar,lidar.RigLidar);
-
-        vTaskDelay(pdMS_TO_TICKS(30));
+		
+		Sliding_Window_Algorithm(Queue_lidar,q_size,&lidar);
+		
+		
+		
+		
+		vTaskDelay(pdMS_TO_TICKS(30));
 
     }
     /* USER CODE END Read_Lidar */
@@ -303,9 +312,17 @@ void Move_Control(void *argument)
 
         CarStat_Get();
 
-        //Motor_Set_Dis(5,15);
-
-        if(move_task_stat.AHEAD_FLAG) {
+		
+		//Motor_Set_Val(30,-30);
+		
+		
+		//CarTurn(90,Car_stat.Car_Alpha,15,0);
+		
+		
+		//printf("%f \r\n",LEFT_MOTOR.Motorspeed );
+        
+		
+		if(move_task_stat.AHEAD_FLAG) {
 
         }
 
@@ -448,6 +465,9 @@ void Task_Stat_Print(void) {
     printf("taskName ttaskState ttaskPrio ttaskStack ttaskNum\r\n");
     printf("%s",InfoBuffer);
     printf("\r\n");
+	printf("\r\n");
+	printf("LF %d RIG %d \r\n",lidar.LefLidar,lidar.RigLidar);
+
 }
 
 

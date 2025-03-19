@@ -1,7 +1,7 @@
 #include "pid.h"
 #include "tim.h"
 #include "motor.h"
-
+#include "math.h"
 //位置
 Pid local_pid;
 //增量
@@ -16,7 +16,8 @@ extern Motor_Stat LEFT_MOTOR;	/*左轮数据*/
 extern Motor_Stat RIG_MOTOR;	/*右轮数据*/
 extern CAR_STAT Car_stat;
 extern Lidar lidar;
-
+extern int Queue_lidar[5]; 
+extern int q_size ;
 
 double test = 0;
 
@@ -30,9 +31,9 @@ void PID_init()
 	local_pid.err=0.000;
 	local_pid.err_last=0.000;
 	local_pid.err_sum=0.000;
-	local_pid.Kp=3.7;
-	local_pid.Ki=0.02;
-	local_pid.Kd=0.5;
+	local_pid.Kp=3;
+	local_pid.Ki=0.01;
+	local_pid.Kd=-2;
 
 	
 	//增量式
@@ -43,9 +44,9 @@ void PID_init()
 	left_incremental_pid.err_last=0.000;
 	left_incremental_pid.err_pre=0.000;
 	left_incremental_pid.err_sum=0.000;
-	left_incremental_pid.Kp=2.5;
-	left_incremental_pid.Ki=0.001;
-	left_incremental_pid.Kd=3;
+	left_incremental_pid.Kp=6;
+	left_incremental_pid.Ki=0.005;
+	left_incremental_pid.Kd=8;
 
 	right_incremental_pid.actual_val=0.000;
 	right_incremental_pid.target_val=0.000;
@@ -54,9 +55,9 @@ void PID_init()
 	right_incremental_pid.err_last=0.000;
 	right_incremental_pid.err_pre=0.000;
 	right_incremental_pid.err_sum=0.000;
-	right_incremental_pid.Kp=2.5;
-	right_incremental_pid.Ki=0.001;
-	right_incremental_pid.Kd=3;
+	right_incremental_pid.Kp=6;
+	right_incremental_pid.Ki=0.005;
+	right_incremental_pid.Kd=8;
 	
 	//mpu
 	mpu_pid.target_sita=0.000;
@@ -66,9 +67,9 @@ void PID_init()
 	mpu_pid.err_last=0.000;
 	mpu_pid.err_pre=0.000;
 	mpu_pid.err_sum=0.000;
-	mpu_pid.Kp=0.15;
-	mpu_pid.Ki=0.0001;
-	mpu_pid.Kd=0.015;
+	mpu_pid.Kp=0.25;
+	mpu_pid.Ki=0;
+	mpu_pid.Kd=0;
 
 
 	Lidar_pid.target_dis=0.000;
@@ -94,11 +95,14 @@ uint8_t CarGoAhead(float val)
 {
 	float val_mpu;
 	float val_lidar;
-	float l_val;
-	float r_val;
+	float l_val = 0;
+	float r_val = 0;
 	
 	//over--》激光突变
-	
+	if(GoToEnd_judge(Queue_lidar,q_size)){
+		PID_init();
+		return 0;
+	}
 	
 	//角度环--》维持当前角度
 	mpu_pid.target_sita = 0;
@@ -200,6 +204,7 @@ uint8_t CarSetDis(float target_dis,float range_val)
 	mpu_pid.target_sita = 0;
 	float val_mpu  = PID_realize_mpu(&mpu_pid,Car_stat.Car_Alpha);
 	
+	
 	//限幅
 	if(target_dis >= 0 ){
 		if(val > range_val) val = range_val;
@@ -207,6 +212,7 @@ uint8_t CarSetDis(float target_dis,float range_val)
 	if(target_dis < 0 ){
 		if(val < -range_val) val = -range_val;
 	}
+	
 	
 	Motor_Set_Val(val-val_mpu,val+val_mpu);
 	return 1;
@@ -219,34 +225,84 @@ uint8_t CarSetDis(float target_dis,float range_val)
 @para	：目标距离target_dis，限速（恒正）range_val
 @return :  void
 **************************************************************************/
-uint8_t CarTurn(float target_sita,float actual_sita,float range_val)
+uint8_t CarTurn(float target_sita,float actual_sita,float max_val,float min_val)
 {
 
 	mpu_pid.target_sita = target_sita;
 	float val=PID_realize_mpu(&mpu_pid,actual_sita);
-		
+	test = val;
 	
 	//over
 	if(mpu_pid.err>=0 && mpu_pid.err < ALLOW_ERR_SITA){
 		Motor_Set(0,0);
 		PID_init();
+		printf("===========================");
 		return 0;
 	}
 	if(mpu_pid.err<0 && mpu_pid.err > -ALLOW_ERR_SITA){
 		Motor_Set(0,0);
 		PID_init();
+		printf("===========================");
 		return 0;
 	}
 	
 	//限幅
-	if(val >= range_val && range_val>=0)val=range_val;
-	if(val <= -range_val && range_val<0)val=-range_val;
+	if( (val>0) && (val > max_val) )val=max_val;
+	if( (val<0) && (val < -max_val) )val=-max_val;
+	
+//	if( (val>0) && (val < min_val) )val=min_val;
+//	if( (val<0) && (val > -min_val) )val=-min_val;
 
+		
+	
+	printf("test: %f rang_val:%f  sita: %f\r\n",test,val,Car_stat.Car_Alpha);
+	
 	Motor_Set_Val(-val,val);
 	
 	return 1;
 
 }
+
+/**************************************************************************
+@bref: 位置环 
+@para	：目标距离target_dis，限速（恒正）range_val
+@return: void
+**************************************************************************/
+uint8_t Motor_Set_Dis(float target_dis,float range_val)
+{
+
+	local_pid.target_dis  = target_dis;
+	float acual_dis = Car_stat.Car_Dis;//当前位置
+	
+	//over
+	float judge = (target_dis - acual_dis);
+	if(judge> 0 && judge <= ALLOW_ERR_DIS){
+			Motor_Set(0,0);
+			PID_init();
+			return 0;
+	}
+	if(judge<0 &&  judge>=-ALLOW_ERR_DIS){
+		Motor_Set(0,0);
+		PID_init();
+		return 0;
+	}
+	
+	float val = PID_realize_dis(&local_pid,acual_dis);
+	
+	//限幅
+	if(target_dis >= 0 ){
+		if(val > range_val) val = range_val;
+	}
+	if(target_dis < 0 ){
+		if(val < -range_val) val = -range_val;
+	}
+		
+	Motor_Set_Val(val,val);
+	return 1;
+
+}
+
+
  
 /**************************************************************************
 @bref: 速度环 
@@ -262,6 +318,8 @@ void Motor_Set_Val(float left_val,float right_val)
 		//速度环计算
 		left_pwm = Incremental_PID_val(&left_incremental_pid,LEFT_MOTOR.Motorspeed);
 		right_pwm = Incremental_PID_val(&right_incremental_pid,RIG_MOTOR.Motorspeed);
+		
+		
 		//pwm + 限幅
 		Motor_Set(left_pwm,right_pwm);
 }
@@ -286,9 +344,11 @@ float PID_realize_dis(Pid * pid,float actual_dis)
 	//保存上次误差: 这次误差赋值给上次误差
 	pid->err_last = pid->err;
 	
-	//限幅
-	if(pid->output_val < 0.5 && pid->output_val > 0) pid->output_val = 0;
-	if(pid->output_val > -0.5 && pid->output_val < 0) pid->output_val = 0;
+//	//限幅
+//	if(pid->output_val < 0.5 && pid->output_val > 0) pid->output_val = 0;
+//	if(pid->output_val > -0.5 && pid->output_val < 0) pid->output_val = 0;
+	
+	
 	
 	return pid->output_val;
 }

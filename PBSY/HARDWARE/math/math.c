@@ -1,5 +1,42 @@
 #include "math.h"
 
+
+
+//¼±Í£ÅÐ¶Ï
+bool GoToEnd_judge(int* ptr,int size){
+	int index = size - 1;
+	//ÅÐ¶¨
+	if(	*(ptr+index) >=255	&& 
+		*(ptr+index-1)>=255 && 		
+		*(ptr) <= 255 		&& 
+		*(ptr+1) <= 255 	&&
+		*(ptr+2) <= 255 	
+		) {
+		
+		//printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n");
+		return true;
+	}
+	else
+		return false;
+
+}
+
+//»¬¶¯´°¿Ú
+void Sliding_Window_Algorithm(int* ptr,int size,Lidar* lidar){
+
+	int index = size - 1;
+	int tmp = lidar->LefLidar + lidar->RigLidar;
+	for (int j = 0; j < index; j++) {
+		*(ptr+j) = *(ptr+j+1); 
+		//printf("%d     ",ptr[j]);
+	}
+	*(ptr+index) = tmp;
+	//printf("%d\r\n",*(ptr+index));
+}
+
+
+
+
 float GildeAverageValueFilter_float(float NewValue,float *Data,unsigned short int windows)
 {
   float max,min;

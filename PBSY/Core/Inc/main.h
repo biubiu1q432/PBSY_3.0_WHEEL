@@ -142,16 +142,17 @@ typedef struct
 	uint8_t RigLidar;
 
 } Lidar;
-#define CAILBRATION_DIS 50
+#define CAILBRATION_DIS 45
 #define CAILBRATION_REPIT 30
 
-//UART
-#define UART_PRINT 4
+
+//UART 2or4
+#define UART_PRINT 2
 
 //PWM
 #define MAX_PWM 1000
 #define MOTOR_ARR 1000
-#define MIN_PWM 100
+#define MIN_PWM 0
 
 //EC
 #define EC_ARR	65535		
@@ -172,8 +173,8 @@ typedef struct
 #define CARD_DATA_SIZE 20
 
 //PID
-#define ALLOW_ERR_DIS 0.5
-#define ALLOW_ERR_SITA 0.5
+#define ALLOW_ERR_DIS 0.3
+#define ALLOW_ERR_SITA 0.3
 
 
 //Radius

@@ -34,3 +34,4 @@ pbsy\pid.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 pbsy\pid.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
 pbsy\pid.o: ../Core/Inc/tim.h
 pbsy\pid.o: ../HARDWARE/motor/motor.h
+pbsy\pid.o: ..\HARDWARE\math\math.h
