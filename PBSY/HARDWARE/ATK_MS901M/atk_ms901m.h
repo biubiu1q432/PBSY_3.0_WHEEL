@@ -186,6 +186,6 @@ uint8_t atk_ms901m_get_port_pwm_pulse(atk_ms901m_port_t port, uint16_t *pulse, u
 uint8_t atk_ms901m_set_port_pwm_pulse(atk_ms901m_port_t port, uint16_t pulse, uint32_t timeout);                                                    /* 设置ATK-MS901M指定端口PWM高电平的宽度 */
 uint8_t atk_ms901m_get_port_pwm_period(atk_ms901m_port_t port, uint16_t *period, uint32_t timeout);                                                 /* 获取ATK-MS901M指定端口PWM周期 */
 uint8_t atk_ms901m_set_port_pwm_period(atk_ms901m_port_t port, uint16_t period, uint32_t timeout);                                                  /* 设置ATK-MS901M指定端口PWM周期 */
-float atk_ms901m_sita_init(void);
-uint8_t atk_ms901m_init(void);
+float atk_ms901m_sita_init(int repit);
+	uint8_t atk_ms901m_init(void);
 #endif

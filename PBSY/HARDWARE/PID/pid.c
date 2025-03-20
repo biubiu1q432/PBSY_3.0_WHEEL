@@ -67,9 +67,9 @@ void PID_init()
 	mpu_pid.err_last=0.000;
 	mpu_pid.err_pre=0.000;
 	mpu_pid.err_sum=0.000;
-	mpu_pid.Kp=0.25;
-	mpu_pid.Ki=0;
-	mpu_pid.Kd=0;
+	mpu_pid.Kp=0.42;
+	mpu_pid.Ki=0.0015;
+	mpu_pid.Kd=1;
 
 
 	Lidar_pid.target_dis=0.000;
@@ -170,7 +170,7 @@ uint8_t CarGoAhead_MPU(float val)
 	
 	Motor_Set_Val(l_val,r_val);
 
-	return 1;
+	return 0;
 
 }
 
@@ -190,12 +190,12 @@ uint8_t CarSetDis(float target_dis,float range_val)
 	if(judge> 0 && judge <= ALLOW_ERR_DIS){
 		Motor_Set(0,0);
 		PID_init();
-		return 0;
+		return 1;
 	}
 	if(judge<0 &&  judge>=-ALLOW_ERR_DIS){
 		Motor_Set(0,0);
 		PID_init();
-		return 0;
+		return 1;
 	}
 	
 	//Œª÷√ª∑
@@ -215,7 +215,7 @@ uint8_t CarSetDis(float target_dis,float range_val)
 	
 	
 	Motor_Set_Val(val-val_mpu,val+val_mpu);
-	return 1;
+	return 0;
 
 }
 
@@ -237,29 +237,29 @@ uint8_t CarTurn(float target_sita,float actual_sita,float max_val,float min_val)
 		Motor_Set(0,0);
 		PID_init();
 		printf("===========================");
-		return 0;
+		return 1;
 	}
 	if(mpu_pid.err<0 && mpu_pid.err > -ALLOW_ERR_SITA){
 		Motor_Set(0,0);
 		PID_init();
 		printf("===========================");
-		return 0;
+		return 1;
 	}
 	
 	//œﬁ∑˘
 	if( (val>0) && (val > max_val) )val=max_val;
 	if( (val<0) && (val < -max_val) )val=-max_val;
 	
-//	if( (val>0) && (val < min_val) )val=min_val;
-//	if( (val<0) && (val > -min_val) )val=-min_val;
+	if( (val>0) && (val < min_val) )val=min_val;
+	if( (val<0) && (val > -min_val) )val=-min_val;
 
 		
-	
-	printf("test: %f rang_val:%f  sita: %f\r\n",test,val,Car_stat.Car_Alpha);
+	printf("sita:   %f    val:  %f \r\n",Car_stat.Car_Alpha,val);
+
 	
 	Motor_Set_Val(-val,val);
 	
-	return 1;
+	return 0;
 
 }
 
@@ -279,12 +279,12 @@ uint8_t Motor_Set_Dis(float target_dis,float range_val)
 	if(judge> 0 && judge <= ALLOW_ERR_DIS){
 			Motor_Set(0,0);
 			PID_init();
-			return 0;
+			return 1;
 	}
 	if(judge<0 &&  judge>=-ALLOW_ERR_DIS){
 		Motor_Set(0,0);
 		PID_init();
-		return 0;
+		return 1;
 	}
 	
 	float val = PID_realize_dis(&local_pid,acual_dis);
@@ -298,7 +298,7 @@ uint8_t Motor_Set_Dis(float target_dis,float range_val)
 	}
 		
 	Motor_Set_Val(val,val);
-	return 1;
+	return 0;
 
 }
 

@@ -141,7 +141,7 @@ void atk_ms901m_uart_init()//uint32_t baudrate)
 //    /*CUBEMX完成*/                                                               */
   
 		
-		g_uart_rx_fifo.size = ATK_MS901M_UART_RX_FIFO_BUF_SIZE;         /* UART接收FIFO缓冲大小 */
+	g_uart_rx_fifo.size = ATK_MS901M_UART_RX_FIFO_BUF_SIZE;         /* UART接收FIFO缓冲大小 */
     g_uart_rx_fifo.reader = 0;                                      /* UART接收FIFO读指针 */
     g_uart_rx_fifo.writer = 0;                                      /* UART接收FIFO写指针 */
 }

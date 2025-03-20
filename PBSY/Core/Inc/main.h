@@ -168,9 +168,9 @@ typedef struct
 #define FILTER_RANGE 10
 #define MPU_ISR_TRIG 1
 
-
-//CARD
+//SERIAL
 #define CARD_DATA_SIZE 20
+#define ODER_DATA_SIZE 10
 
 //PID
 #define ALLOW_ERR_DIS 0.3

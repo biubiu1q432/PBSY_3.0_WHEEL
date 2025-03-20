@@ -45,7 +45,7 @@ pbsy\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_
 pbsy\freertos.o: ../Core/Inc/usart.h
 pbsy\freertos.o: ../HARDWARE/ATK_MS901M/atk_ms901m.h
 pbsy\freertos.o: ../HARDWARE/ATK_MS901M/atk_ms901m_uart.h
-pbsy\freertos.o: ..\HARDWARE\math\math.h
+pbsy\freertos.o: ../HARDWARE/math/math.h
 pbsy\freertos.o: ../HARDWARE/vl6180x/vl6180x.h
 pbsy\freertos.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 pbsy\freertos.o: ../HARDWARE/vl6180x/MyI2C.h

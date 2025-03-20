@@ -73,14 +73,13 @@ static struct
 
 
 /*角度归零*/
-float atk_ms901m_sita_init(void){
+float atk_ms901m_sita_init(int repit){
 	float sita_init = 0;
-	float sita_arr[5]; 
-	
-	for(int i =0;i<=20;i++){
+	float sita_arr[10]; 
+	for(int i =0;i<repit;i++){
 			atk_ms901m_get_attitude(&attitude_dat,MPU_MAX_WAIT);	
 			float tmp_sita = attitude_dat.yaw;
-			sita_init = GildeAverageValueFilter_float(tmp_sita,sita_arr,5);
+			sita_init = GildeAverageValueFilter_float(tmp_sita,sita_arr,10);
 		}	
 	
 	return sita_init;
@@ -350,12 +349,12 @@ uint8_t atk_ms901m_init()//uint32_t baudrate)
         return ATK_MS901M_ERROR;
     }
     
-    /* 获取ATK-MS901M加速度计满量程 */
-    ret = atk_ms901m_read_reg_by_id(ATK_MS901M_FRAME_ID_REG_ACCFSR, &g_atk_ms901m_fsr.accelerometer, 100);
-    if (ret == 0)
-    {
-        return ATK_MS901M_ERROR;
-    }
+//    /* 获取ATK-MS901M加速度计满量程 */
+//    ret = atk_ms901m_read_reg_by_id(ATK_MS901M_FRAME_ID_REG_ACCFSR, &g_atk_ms901m_fsr.accelerometer, 100);
+//    if (ret == 0)
+//    {
+//        return ATK_MS901M_ERROR;
+//    }
     
     return ATK_MS901M_EOK;
 }
