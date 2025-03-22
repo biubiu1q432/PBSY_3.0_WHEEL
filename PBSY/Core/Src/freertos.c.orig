@@ -52,7 +52,7 @@
 /* USER CODE BEGIN PM */
 
 void Task_Stat_Print(void);
-
+void CarStatParmPrint(void);
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -66,8 +66,11 @@ extern atk_ms901m_accelerometer_data_t accelerometer_dat;
 extern atk_ms901m_quaternion_data_t quaternion_dat;
 extern atk_ms901m_attitude_data_t attitude_dat;
 
+
 //Lidar
 Lidar lidar;
+int Queue_lidar[5] = { 255,255,255,255,255 }; // 初始化判断数组
+int q_size = sizeof(Queue_lidar) / sizeof(Queue_lidar[0]);
 
 //MOTOR
 extern Motor_Stat LEFT_MOTOR;
@@ -77,10 +80,14 @@ extern Motor_Stat RIG_MOTOR;
 CAR_STAT Car_stat;
 MOVE_TASK_STAT move_task_stat;
 
-
 //CARD
-extern uint8_t CARD_DATA[20];
+extern uint8_t CARD_DATA[CARD_DATA_SIZE];
 extern DMA_HandleTypeDef hdma_usart1_rx;
+
+//SERIAL
+extern uint8_t ORDER_DATA[ODER_DATA_SIZE];
+extern DMA_HandleTypeDef hdma_usart2_rx;
+
 
 /* USER CODE END Variables */
 /* Definitions for GET_TASK */
@@ -88,21 +95,21 @@ osThreadId_t GET_TASKHandle;
 const osThreadAttr_t GET_TASK_attributes = {
   .name = "GET_TASK",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityBelowNormal,
 };
 /* Definitions for MPU_TASK */
 osThreadId_t MPU_TASKHandle;
 const osThreadAttr_t MPU_TASK_attributes = {
   .name = "MPU_TASK",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for LIDAR_TASK */
 osThreadId_t LIDAR_TASKHandle;
 const osThreadAttr_t LIDAR_TASK_attributes = {
   .name = "LIDAR_TASK",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for PID_TASK */
 osThreadId_t PID_TASKHandle;
@@ -116,7 +123,7 @@ osThreadId_t CARD_TASKHandle;
 const osThreadAttr_t CARD_TASK_attributes = {
   .name = "CARD_TASK",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityBelowNormal,
 };
 /* Definitions for CARD_FLAG */
 osSemaphoreId_t CARD_FLAGHandle;
@@ -220,12 +227,34 @@ void Get_Task(void *argument)
 {
   /* USER CODE BEGIN Get_Task */
 
-	
-	/* Infinite loop */
+
+    /* Infinite loop */
     for(;;)
-    {		
-		HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+    {
+//        if(xSemaphoreTake(TASK_FLAGHandle,portMAX_DELAY) == pdTRUE){
+//
+//			char task_seg[3];
+//			float value1, value2;
+//
+//			sscanf(ORDER_DATA, "%[^|]|%f|%f", task_seg, &value1, &value2);
+//			if (strcmp(task_seg, "1") == 0) {
+//				// GoAhead
+//				printf("Executing GoAhead with speed %f\n", value1);
+//			} else if (strcmp(task_seg, "2") == 0) {
+//				// Turn
+//				printf("Executing Turn with angle %f and speed %f\n", value1, value2);
+//			} else if (strcmp(task_seg, "3") == 0) {
+//				// Dis
+//				printf("Executing Dis with distance %f and speed %f\n", value1, value2);
+
+//			}
+//
+//
+//		}
+		
         vTaskDelay(pdMS_TO_TICKS(100));
+
+
     }
   /* USER CODE END Get_Task */
 }
@@ -240,16 +269,20 @@ void Get_Task(void *argument)
 void Read_MPU(void *argument)
 {
   /* USER CODE BEGIN Read_MPU */
-    float sita_fliter[FILTER_RANGE];
-    float sita_init =atk_ms901m_sita_init();
+
+    uint8_t ret = atk_ms901m_init();
+    float sita_init = atk_ms901m_sita_init(20);
+    Car_stat.Car_LastAlpha = sita_init;
+    float sita_fliter[FILTER_RANGE] = {sita_init,sita_init,sita_init,sita_init,sita_init};
+
     /* Infinite loop */
     for(;;)
     {
         uint8_t	ret = atk_ms901m_get_attitude(&attitude_dat,MPU_MAX_WAIT);
         float tmp_sita = attitude_dat.yaw;
-		Car_stat.Car_Alpha = GildeAverageValueFilter_float(tmp_sita,sita_fliter,FILTER_RANGE) - sita_init;
-		printf("%f\r\n",Car_stat.Car_Alpha);
-        vTaskDelay(pdMS_TO_TICKS(20));
+        Car_stat.Car_Alpha = GildeAverageValueFilter_float(tmp_sita,sita_fliter,FILTER_RANGE) - Car_stat.Car_LastAlpha;		
+		vTaskDelay(pdMS_TO_TICKS(20));
+
     }
   /* USER CODE END Read_MPU */
 }
@@ -265,21 +298,24 @@ void Read_Lidar(void *argument)
 {
   /* USER CODE BEGIN Read_Lidar */
 
-	VL6180X_Init(1);
-	VL6180X_Init(2);
-	VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
-			
-	/* Infinite loop */
+    VL6180X_Init(1);
+    VL6180X_Init(2);
+    //VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
+
+    /* Infinite loop */
     for(;;)
     {
-	
+        
 		lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
-		lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
+        lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
+        Sliding_Window_Algorithm(Queue_lidar,q_size,&lidar);
 		
-		//printf("LF %d RIG %d \r\n",lidar.LefLidar,lidar.RigLidar);
-		
-		vTaskDelay(pdMS_TO_TICKS(30));
+		HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 
+		
+		//printf("lidar : %d    %d \r\n",lidar.LefLidar,lidar.RigLidar);
+		
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
   /* USER CODE END Read_Lidar */
 }
@@ -294,36 +330,54 @@ void Read_Lidar(void *argument)
 void Move_Control(void *argument)
 {
   /* USER CODE BEGIN Move_Control */
-	PID_init();
+    PID_init();
+	//move_task_stat.TURN_FLAG = true;
 
     /* Infinite loop */
     for(;;)
     {
-		
-		//printf("LD:%d  RD:%d  theta:%f Speed:%f",lidar.LefLidar,lidar.RigLidar,Car_stat.Car_Alpha,Car_stat.Car_Speed);
-		
-		CarStat_Get();
 
-		//Motor_Set_Dis(5,15);
+        CarStat_Get();
 		
+		CarStatParmPrint();
+				//Task_Stat_Print();
+
+
         if(move_task_stat.AHEAD_FLAG) {
+			uint8_t ret = CarGoAhead(60);
+			if(ret) {
+                move_task_stat.AHEAD_FLAG = false;
 
+            }
         }
 
         else if(move_task_stat.TURN_FLAG) {
+            uint8_t ret = CarTurn(30,Car_stat.Car_Alpha,25,0.5);
+            if(ret) {
+                move_task_stat.TURN_FLAG = false;
+				Car_stat.Car_LastAlpha = 30;//角度更新
+				printf("DONE\r\n");
+            }
 
         }
 
-        else if(move_task_stat.STOP_FLAG) {
+		else if(move_task_stat.DIS_FLAG) {
+            uint8_t ret =CarSetDis(30,20);
+            if(ret) {
+				move_task_stat.DIS_FLAG = false;
+				Car_stat.Car_Dis = 0.0f;//距离重置
+				printf("DONE\r\n");
+			}
 
-        }
+		}
+       
+		else if(move_task_stat.STOP_FLAG) {
+			Motor_Set_Val(0,0);
+		}
 
-        else if(move_task_stat.DIS_FLAG) {
-
-        }
 
 
-        else vTaskDelay(pdMS_TO_TICKS(50));
+        vTaskDelay(pdMS_TO_TICKS(50));
 
 
     }
@@ -343,21 +397,36 @@ void Read_ID(void *argument)
     /* Infinite loop */
     for(;;)
     {
-       
-		if(xSemaphoreTake(CARD_FLAGHandle,portMAX_DELAY) == pdTRUE) {
+
+        if(xSemaphoreTake(CARD_FLAGHandle,portMAX_DELAY) == pdTRUE) {
             for(int i=0; i<=sizeof(CARD_DATA_SIZE); i++) {
-                printf("%d",CARD_DATA[i]);
+                //printf("%d",CARD_DATA[i]);
                 CARD_DATA[i] = 0;
             }
         }
 
-		vTaskDelay(pdMS_TO_TICKS(100));
     }
   /* USER CODE END Read_ID */
 }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+
+
+/*调试*/
+void CarStatParmPrint(void){
+		
+	printf("SITA:   %f   	DIS:	%f		L_VAL:  %f		R_VAL:   %f 	L_LIDAR:	%d  	  RIG_LIDAR: %d	\r\n",
+		Car_stat.Car_Alpha,
+		Car_stat.Car_Dis,
+		LEFT_MOTOR.Motorspeed,
+		RIG_MOTOR.Motorspeed,
+		lidar.LefLidar,
+		lidar.RigLidar);
+	
+	
+}
+
 
 
 /*FIND_COLOR_STOP_ISR*/
@@ -373,6 +442,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     }
 }
 
+
 /*MPU_RXNE_ISR*/
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
@@ -385,13 +455,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 /*SERIAL_DMA_ISR*/
 BaseType_t xHigherPriorityTaskWoken_card = pdFALSE;
+BaseType_t xHigherPriorityTaskWoken_serial = pdFALSE;
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 
     //CARD
     if(huart == &huart1) {
         HAL_UARTEx_ReceiveToIdle_DMA(&huart1,CARD_DATA,sizeof(CARD_DATA));
         __HAL_DMA_DISABLE_IT(&hdma_usart1_rx,DMA_IT_HT);
-        //�ź���
         if(CARD_FLAGHandle != NULL)	{
             BaseType_t err = xSemaphoreGiveFromISR(CARD_FLAGHandle,&xHigherPriorityTaskWoken_card);
             portYIELD_FROM_ISR(xHigherPriorityTaskWoken_card);
@@ -401,12 +471,17 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 
     //SERIAL
     if(huart == &huart2) {
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart2,ORDER_DATA,sizeof(ORDER_DATA));//SERIAL
+        __HAL_DMA_DISABLE_IT(&hdma_usart2_rx,DMA_IT_HT);
+        if(TASK_FLAGHandle != NULL)	{
+            BaseType_t err = xSemaphoreGiveFromISR(TASK_FLAGHandle,&xHigherPriorityTaskWoken_serial);
+            portYIELD_FROM_ISR(xHigherPriorityTaskWoken_serial);
+        }
 
     }
 
 
 }
-
 
 /*
  task name		task 当前状态 	 													task 优先级   				最小剩余 task 栈空间
@@ -417,38 +492,41 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 						D: deleted     删除
 						S: suspended挂起（手动）
 */
-void Task_Stat_Print(void){
-		
+void Task_Stat_Print(void) {
+
 //		TaskStatus_t taskInfo ;
 //		BaseType_t getFreeSpace = pdTRUE;
 //		eTaskState taskState = eInvalid;
-//	
+//
 //		TaskHandle_t taskhandle = GET_TASKHandle ;
 //		vTaskGetInfo(taskhandle,&taskInfo,getFreeSpace,taskState);
 //		printf("Task Name: %s  Task State: %d  Stack High water mark: %d\r\n",taskInfo.pcTaskName,taskInfo.eCurrentState,taskInfo.usStackHighWaterMark);
-//		
+//
 //		taskhandle = MPU_TASKHandle ;
-//		vTaskGetInfo(taskhandle,&taskInfo,getFreeSpace,taskState);		
+//		vTaskGetInfo(taskhandle,&taskInfo,getFreeSpace,taskState);
 //		printf("Task Name: %s  Task State: %d  Stack High water mark: %d\r\n",taskInfo.pcTaskName,taskInfo.eCurrentState,taskInfo.usStackHighWaterMark);
-//		
+//
 //		taskhandle = LIDAR_TASKHandle ;
 //		vTaskGetInfo(taskhandle,&taskInfo,getFreeSpace,taskState);
 //		printf("Task Name: %s  Task State: %d  Stack High water mark: %d\r\n",taskInfo.pcTaskName,taskInfo.eCurrentState,taskInfo.usStackHighWaterMark);
-//	
+//
 //		taskhandle = PID_TASKHandle ;
 //		vTaskGetInfo(taskhandle,&taskInfo,getFreeSpace,taskState);
 //		printf("Task Name: %s  Task State: %d  Stack High water mark: %d\r\n",taskInfo.pcTaskName,taskInfo.eCurrentState,taskInfo.usStackHighWaterMark);
-//		
+//
 //		taskhandle = CARD_TASKHandle ;
 //		vTaskGetInfo(taskhandle,&taskInfo,getFreeSpace,taskState);
 //		printf("Task Name: %s  Task State: %d  Stack High water mark: %d\r\n",taskInfo.pcTaskName,taskInfo.eCurrentState,taskInfo.usStackHighWaterMark);
 //		printf("\r\n");
 
-	  char InfoBuffer[200];
-	  vTaskList(InfoBuffer);
-	  printf("taskName ttaskState ttaskPrio ttaskStack ttaskNum\r\n");
-	  printf("%s",InfoBuffer);
-	  printf("\r\n");
+    char InfoBuffer[200];
+    vTaskList(InfoBuffer);
+    printf("taskName ttaskState ttaskPrio ttaskStack ttaskNum\r\n");
+    printf("%s",InfoBuffer);
+    printf("\r\n");
+    printf("\r\n");
+    printf("LF %d RIG %d \r\n",lidar.LefLidar,lidar.RigLidar);
+
 }
 
 

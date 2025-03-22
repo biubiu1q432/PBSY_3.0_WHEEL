@@ -119,6 +119,18 @@ void Error_Handler(void);
 /* USER CODE BEGIN Private defines */
 
 
+//TARGET PARA
+typedef struct
+{
+	float ARG_VAL;
+	float MAX_VAL;
+	float MIN_VAL;
+
+	float SITA;
+	float DIS;
+}TARGET_PARA;
+
+
 //MOVE
 typedef struct
 {
@@ -128,8 +140,8 @@ typedef struct
 	bool DIS_FLAG;
 
 } MOVE_TASK_STAT;
-#define MPU_WEIGHT_FOR_VAL 0.5
-#define LIDAR_WEIGHT_FOR_VAL 0.05
+#define MPU_WEIGHT_FOR_VAL 0.7
+#define LIDAR_WEIGHT_FOR_VAL 0.3
 
 
 //Lidar
@@ -143,7 +155,10 @@ typedef struct
 
 } Lidar;
 #define CAILBRATION_DIS 45
-#define CAILBRATION_REPIT 30
+#define CAILBRATION_REPIT 10
+#define LIDAR_MAX_WAIT 5
+
+
 
 
 //UART 2or4
@@ -165,7 +180,7 @@ typedef struct
 
 //MPU
 #define MPU_MAX_WAIT 15
-#define FILTER_RANGE 10
+#define FILTER_RANGE 5
 #define MPU_ISR_TRIG 1
 
 //SERIAL

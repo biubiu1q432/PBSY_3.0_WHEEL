@@ -27,7 +27,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "atk_ms901m.h"
+#include "atk_ms901m_uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,10 +52,12 @@
 uint8_t mpu_once_isr_data[MPU_ISR_TRIG];
 uint8_t TEST;
 uint8_t CARD_DATA[CARD_DATA_SIZE];
-uint8_t ORDER_DATA[ODER_DATA_SIZE];
+char ORDER_DATA[ODER_DATA_SIZE];
 
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart2_rx;
+
+
 
 /* USER CODE END PV */
 
@@ -112,15 +115,14 @@ int main(void)
   MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
 
-	HAL_Delay(100);
 
     HAL_UART_Receive_IT(&huart5,mpu_once_isr_data,MPU_ISR_TRIG);//mpu
     HAL_UART_Receive_IT(&huart4,&TEST,1);//DEBUG
-   
-	HAL_UARTEx_ReceiveToIdle_DMA(&huart1,CARD_DATA,sizeof(CARD_DATA));//CARD
+
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart1,CARD_DATA,sizeof(CARD_DATA));//CARD
     __HAL_DMA_DISABLE_IT(&hdma_usart1_rx,DMA_IT_HT);
-    
-	HAL_UARTEx_ReceiveToIdle_DMA(&huart2,ORDER_DATA,sizeof(ORDER_DATA));//SERIAL
+
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart2,ORDER_DATA,sizeof(ORDER_DATA));//SERIAL
     __HAL_DMA_DISABLE_IT(&hdma_usart2_rx,DMA_IT_HT);
 
     HAL_TIM_Encoder_Start(&htim1,TIM_CHANNEL_ALL);//编码器

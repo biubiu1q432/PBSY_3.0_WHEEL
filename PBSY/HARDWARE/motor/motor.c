@@ -61,7 +61,7 @@ void Motor_Set(float Left_PWM,float Right_PWM)
 
 
 /**************************************************************************
-@bref: 左右轮参数获取
+@bref: 更新Car_stat：速度 + 距离 + 角速度
 @para	：void
 @return: void
 **************************************************************************/
@@ -94,10 +94,16 @@ void CarStat_Get(void){
 	相对角度
 	距离重置
 */
-void Car_Stat_ReFresh(void)
+void Car_Dis_ReFresh(void)
 {
-	Car_stat.Car_LastAlpha = Car_stat.Car_Alpha;
+	LEFT_MOTOR.Distance = 0;
+	RIG_MOTOR.Distance = 0;
 	Car_stat.Car_Dis = 0;
+}
+
+void Car_Alpha_ReFresh(float last_order_alpha)
+{
+	Car_stat.Car_LastAlpha += last_order_alpha;
 }
 
 

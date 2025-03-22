@@ -24,6 +24,8 @@ typedef struct
 	float err_pre;//上上次偏差
 	float err_sum;//误差累计值
 	float Kp,Ki,Kd;//比例，积分，微分系数
+	
+	int lidar_err;
 		 
 } Pid;
 

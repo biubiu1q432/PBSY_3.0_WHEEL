@@ -29,8 +29,8 @@ void Motor_Set(float Left_PWM,float Right_PWM);
 void CarStat_Get(void);
 
 //car
-void Car_Stat_ReFresh(void);
-
+void Car_Dis_ReFresh(void);
+void Car_Alpha_ReFresh(float last_order_alpha);
 #endif
 
 

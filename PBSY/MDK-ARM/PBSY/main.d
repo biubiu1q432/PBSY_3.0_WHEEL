@@ -47,3 +47,5 @@ pbsy\main.o: ../Core/Inc/i2c.h
 pbsy\main.o: ../Core/Inc/tim.h
 pbsy\main.o: ../Core/Inc/usart.h
 pbsy\main.o: ../Core/Inc/gpio.h
+pbsy\main.o: ../HARDWARE/ATK_MS901M/atk_ms901m.h
+pbsy\main.o: ../HARDWARE/ATK_MS901M/atk_ms901m_uart.h

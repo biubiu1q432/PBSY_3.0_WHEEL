@@ -52,7 +52,7 @@
 /* USER CODE BEGIN PM */
 
 void Task_Stat_Print(void);
-
+void CarStatParmPrint(void);
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -65,6 +65,14 @@ extern atk_ms901m_gyro_data_t gyro_dat;
 extern atk_ms901m_accelerometer_data_t accelerometer_dat;
 extern atk_ms901m_quaternion_data_t quaternion_dat;
 extern atk_ms901m_attitude_data_t attitude_dat;
+
+
+//TARGET PARA
+TARGET_PARA TargetPara;
+bool ISDONE = false;
+bool ISID = false;
+bool ISSTOP = false;
+
 
 //Lidar
 Lidar lidar;
@@ -84,7 +92,7 @@ extern uint8_t CARD_DATA[CARD_DATA_SIZE];
 extern DMA_HandleTypeDef hdma_usart1_rx;
 
 //SERIAL
-extern uint8_t ORDER_DATA[ODER_DATA_SIZE];
+extern char ORDER_DATA[ODER_DATA_SIZE];
 extern DMA_HandleTypeDef hdma_usart2_rx;
 
 
@@ -108,7 +116,7 @@ osThreadId_t LIDAR_TASKHandle;
 const osThreadAttr_t LIDAR_TASK_attributes = {
   .name = "LIDAR_TASK",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for PID_TASK */
 osThreadId_t PID_TASKHandle;
@@ -133,11 +141,6 @@ const osSemaphoreAttr_t CARD_FLAG_attributes = {
 osSemaphoreId_t TASK_FLAGHandle;
 const osSemaphoreAttr_t TASK_FLAG_attributes = {
   .name = "TASK_FLAG"
-};
-/* Definitions for STOP_FLAG */
-osSemaphoreId_t STOP_FLAGHandle;
-const osSemaphoreAttr_t STOP_FLAG_attributes = {
-  .name = "STOP_FLAG"
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -172,10 +175,7 @@ void MX_FREERTOS_Init(void) {
   CARD_FLAGHandle = osSemaphoreNew(1, 0, &CARD_FLAG_attributes);
 
   /* creation of TASK_FLAG */
-  TASK_FLAGHandle = osSemaphoreNew(1, 1, &TASK_FLAG_attributes);
-
-  /* creation of STOP_FLAG */
-  STOP_FLAGHandle = osSemaphoreNew(1, 0, &STOP_FLAG_attributes);
+  TASK_FLAGHandle = osSemaphoreNew(1, 0, &TASK_FLAG_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
     /* add semaphores, ... */
@@ -225,35 +225,66 @@ void MX_FREERTOS_Init(void) {
 void Get_Task(void *argument)
 {
   /* USER CODE BEGIN Get_Task */
-
-
+	char DONE = '#';
+	char STOP = '!';
+	char ID_ = '@';
+ 
     /* Infinite loop */
     for(;;)
     {
-        if(xSemaphoreTake(TASK_FLAGHandle,portMAX_DELAY) == pdTRUE){
-			
-			char task_seg[3];
-			float value1, value2;
-			
-			sscanf(ORDER_DATA, "%[^|]|%f|%f", task_seg, &value1, &value2);
-			if (strcmp(task_seg, "1") == 0) {
-				// GoAhead
-				printf("Executing GoAhead with speed %f\n", value1);
-			} else if (strcmp(task_seg, "2") == 0) {
-				// Turn
-				printf("Executing Turn with angle %f and speed %f\n", value1, value2);
-			} else if (strcmp(task_seg, "3") == 0) {
-				// Dis
-				printf("Executing Dis with distance %f and speed %f\n", value1, value2);
-
-			} else {
-				// 未知命令
-				printf("Unknown command\n");
-			}
-		
-		
+        
+		//SEND
+		if(ISDONE){
+			HAL_UART_Transmit_DMA(&huart2,&DONE,sizeof(DONE));
+			ISDONE = false;
 		}
 		
+		if(ISID){
+			
+			ISID= false;
+		}
+		
+		if(ISSTOP){
+		
+			ISSTOP = false;
+		}
+		
+		
+		
+	
+		//RECIEVE
+		if(xSemaphoreTake(TASK_FLAGHandle,1) == pdTRUE){
+
+			char task_seg[3];
+			float value1, value2;
+
+			sscanf(ORDER_DATA, "%[^|]|%f|%f", task_seg, &value1, &value2);
+			
+			// GoAhead
+			if (strcmp(task_seg, "1") == 0) {
+				TargetPara.ARG_VAL = value1;
+				move_task_stat.AHEAD_FLAG = true;
+			} 
+			
+			//	Turn
+			else if (strcmp(task_seg, "2") == 0) {
+				TargetPara.MAX_VAL = value2;
+				TargetPara.SITA = value1;
+				move_task_stat.TURN_FLAG = true;
+			} 
+			
+			else if (strcmp(task_seg, "3") == 0) {
+				// Dis
+				TargetPara.DIS  = value1;
+				TargetPara.MAX_VAL = value2;
+				move_task_stat.DIS_FLAG = true;
+			}
+
+
+		}
+        vTaskDelay(pdMS_TO_TICKS(100));
+
+
     }
   /* USER CODE END Get_Task */
 }
@@ -268,17 +299,19 @@ void Get_Task(void *argument)
 void Read_MPU(void *argument)
 {
   /* USER CODE BEGIN Read_MPU */
-    float sita_fliter[FILTER_RANGE];
-	uint8_t ret = atk_ms901m_init();
-	float sita_init = atk_ms901m_sita_init(20);
-	Car_stat.Car_LastAlpha = sita_init;
+
+    uint8_t ret = atk_ms901m_init();
+    float sita_init = atk_ms901m_sita_init(20);
+    Car_stat.Car_LastAlpha = sita_init;
+    float sita_fliter[FILTER_RANGE] = {sita_init,sita_init,sita_init,sita_init,sita_init};
+
     /* Infinite loop */
     for(;;)
     {
         uint8_t	ret = atk_ms901m_get_attitude(&attitude_dat,MPU_MAX_WAIT);
         float tmp_sita = attitude_dat.yaw;
         Car_stat.Car_Alpha = GildeAverageValueFilter_float(tmp_sita,sita_fliter,FILTER_RANGE) - Car_stat.Car_LastAlpha;
-		vTaskDelay(pdMS_TO_TICKS(20));
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
   /* USER CODE END Read_MPU */
 }
@@ -293,25 +326,24 @@ void Read_MPU(void *argument)
 void Read_Lidar(void *argument)
 {
   /* USER CODE BEGIN Read_Lidar */
-   
-	VL6180X_Init(1);
-    VL6180X_Init(2);
-    //VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
 
-    /* Infinite loop */
+    VL6180X_Init(1);
+    VL6180X_Init(2);
+    
+	taskENTER_CRITICAL();
+	VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
+	taskEXIT_CRITICAL();
+    
+	/* Infinite loop */
     for(;;)
     {
-
-        lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
+        taskENTER_CRITICAL();
+		lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
         lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
-
-		
+		taskEXIT_CRITICAL();
+        
 		Sliding_Window_Algorithm(Queue_lidar,q_size,&lidar);
-		
-		
-	
-		vTaskDelay(pdMS_TO_TICKS(30));
-
+        vTaskDelay(pdMS_TO_TICKS(35));
     }
   /* USER CODE END Read_Lidar */
 }
@@ -327,42 +359,57 @@ void Move_Control(void *argument)
 {
   /* USER CODE BEGIN Move_Control */
     PID_init();
-	move_task_stat.TURN_FLAG = true;
     /* Infinite loop */
-    for(;;)
+    
+	for(;;)
     {
 
         CarStat_Get();
-        
 		
-		if(move_task_stat.AHEAD_FLAG) {
-			vTaskDelay(pdMS_TO_TICKS(50));
 
+        if(move_task_stat.AHEAD_FLAG) {
+            uint8_t ret = CarGoAhead(TargetPara.ARG_VAL);
+            if(ret) {
+                move_task_stat.AHEAD_FLAG = false;
+				Car_Dis_ReFresh();//距离重置
+				ISDONE = true;
+            }
         }
 
         else if(move_task_stat.TURN_FLAG) {
-			uint8_t ret = CarTurn(90,Car_stat.Car_Alpha,15,0.5);
-			if(ret){
-				move_task_stat.TURN_FLAG = false;
-				HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+            uint8_t ret = CarTurn(TargetPara.SITA,Car_stat.Car_Alpha,TargetPara.MAX_VAL,0.5);
+            if(ret) {
+                move_task_stat.TURN_FLAG = false;
+                Car_Alpha_ReFresh(TargetPara.SITA);//角度更新
+				Car_Dis_ReFresh();
+				ISDONE = true;
 
-			}
-			vTaskDelay(pdMS_TO_TICKS(50));
-
-        }
-
-        else if(move_task_stat.STOP_FLAG) {
-			vTaskDelay(pdMS_TO_TICKS(50));
+            }
 
         }
 
         else if(move_task_stat.DIS_FLAG) {
-			vTaskDelay(pdMS_TO_TICKS(50));
+            
+			CarStatParmPrint();
+
+			uint8_t ret =CarSetDis(TargetPara.DIS,TargetPara.MAX_VAL);
+            if(ret) {
+                move_task_stat.DIS_FLAG = false;
+				Car_Dis_ReFresh();//距离重置
+				ISDONE = true;
+            }
 
         }
 
+        else if(move_task_stat.STOP_FLAG) {
+            Motor_Set_Val(0,0);
+			Car_Dis_ReFresh();//距离重置
+			ISDONE = true;
+        }
 
-        else vTaskDelay(pdMS_TO_TICKS(50));
+
+
+        vTaskDelay(pdMS_TO_TICKS(50));
 
 
     }
@@ -385,7 +432,7 @@ void Read_ID(void *argument)
 
         if(xSemaphoreTake(CARD_FLAGHandle,portMAX_DELAY) == pdTRUE) {
             for(int i=0; i<=sizeof(CARD_DATA_SIZE); i++) {
-                printf("%d",CARD_DATA[i]);
+                //printf("%d",CARD_DATA[i]);
                 CARD_DATA[i] = 0;
             }
         }
@@ -398,17 +445,31 @@ void Read_ID(void *argument)
 /* USER CODE BEGIN Application */
 
 
+/*调试*/
+void CarStatParmPrint(void) {
+
+    printf("SITA:   %f   	DIS:	%f		L_VAL:  %f		R_VAL:   %f 	L_LIDAR:	%d  	  RIG_LIDAR: %d	\r\n",
+           Car_stat.Car_Alpha,
+           Car_stat.Car_Dis,
+           LEFT_MOTOR.Motorspeed,
+           RIG_MOTOR.Motorspeed,
+           lidar.LefLidar,
+           lidar.RigLidar);
+
+
+}
+
+
+
 /*FIND_COLOR_STOP_ISR*/
 BaseType_t xHigherPriorityTaskWoken_stop = pdFALSE;
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
     if(GPIO_Pin == R_FC_Pin || GPIO_Pin==L_FC_Pin) {
-        if(CARD_FLAGHandle != NULL)	{
-            BaseType_t err = xSemaphoreGiveFromISR(STOP_FLAGHandle,&xHigherPriorityTaskWoken_stop);
-            portYIELD_FROM_ISR(xHigherPriorityTaskWoken_stop);
+			ISSTOP = true;
         }
 
-    }
+    
 }
 
 
@@ -440,18 +501,17 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 
     //SERIAL
     if(huart == &huart2) {
-		HAL_UARTEx_ReceiveToIdle_DMA(&huart2,ORDER_DATA,sizeof(ORDER_DATA));//SERIAL
-		__HAL_DMA_DISABLE_IT(&hdma_usart2_rx,DMA_IT_HT);
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart2,ORDER_DATA,sizeof(ORDER_DATA));//SERIAL
+        __HAL_DMA_DISABLE_IT(&hdma_usart2_rx,DMA_IT_HT);
         if(TASK_FLAGHandle != NULL)	{
-			BaseType_t err = xSemaphoreGiveFromISR(TASK_FLAGHandle,&xHigherPriorityTaskWoken_serial);
+            BaseType_t err = xSemaphoreGiveFromISR(TASK_FLAGHandle,&xHigherPriorityTaskWoken_serial);
             portYIELD_FROM_ISR(xHigherPriorityTaskWoken_serial);
-		}
-		
+        }
+
     }
 
 
 }
-
 
 /*
  task name		task 当前状态 	 													task 优先级   				最小剩余 task 栈空间
@@ -494,8 +554,8 @@ void Task_Stat_Print(void) {
     printf("taskName ttaskState ttaskPrio ttaskStack ttaskNum\r\n");
     printf("%s",InfoBuffer);
     printf("\r\n");
-	printf("\r\n");
-	printf("LF %d RIG %d \r\n",lidar.LefLidar,lidar.RigLidar);
+    printf("\r\n");
+    printf("LF %d RIG %d \r\n",lidar.LefLidar,lidar.RigLidar);
 
 }
 

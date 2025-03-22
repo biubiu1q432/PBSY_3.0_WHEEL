@@ -12,6 +12,11 @@ Pid mpu_pid;
 //激光
 Pid Lidar_pid;
 
+
+
+
+
+
 extern Motor_Stat LEFT_MOTOR;	/*左轮数据*/
 extern Motor_Stat RIG_MOTOR;	/*右轮数据*/
 extern CAR_STAT Car_stat;
@@ -72,15 +77,16 @@ void PID_init()
 	mpu_pid.Kd=1;
 
 
+	//lidar
 	Lidar_pid.target_dis=0.000;
 	Lidar_pid.actual_dis=0.000;
 	Lidar_pid.output_val=0.000;
 	Lidar_pid.err=0.000;
 	Lidar_pid.err_last=0.000;
 	Lidar_pid.err_sum=0.000;
-	Lidar_pid.Kp=0;
+	Lidar_pid.Kp=0.45;
 	Lidar_pid.Ki=0;
-	Lidar_pid.Kd=0;
+	Lidar_pid.Kd=0.8;
 
 
 }
@@ -98,11 +104,11 @@ uint8_t CarGoAhead(float val)
 	float l_val = 0;
 	float r_val = 0;
 	
-	//over--》激光突变
-	if(GoToEnd_judge(Queue_lidar,q_size)){
-		PID_init();
-		return 0;
-	}
+//	//over--》激光突变
+//	if(GoToEnd_judge(Queue_lidar,q_size)){
+//		PID_init();
+//		return 0;
+//	}
 	
 	//角度环--》维持当前角度
 	mpu_pid.target_sita = 0;
@@ -116,12 +122,16 @@ uint8_t CarGoAhead(float val)
 	l_val = val - val_mpu * MPU_WEIGHT_FOR_VAL - val_lidar *  LIDAR_WEIGHT_FOR_VAL;
 	r_val = val + val_mpu * MPU_WEIGHT_FOR_VAL + val_lidar *  LIDAR_WEIGHT_FOR_VAL;
 	
-	return 1;
+	
+	
+	Motor_Set_Val(l_val,r_val);
+
+	return 0;
 
 }
 
 /**************************************************************************
-@bref    DEBUG：lidar走直线（lidar + ec）
+@bref    DEBUG：lidar走直线（lidar + ec）  
 @para	 恒定速度： float val
 @return 
 **************************************************************************/
@@ -140,6 +150,8 @@ uint8_t CarGoAhead_Lidar(float val)
 	l_val = val - val_lidar  ;
 	r_val = val + val_lidar  ;
 	
+	printf("err:	%d	 l_val:  %f    r_val:    %f\r\n",((int)lidar.LefLidar - (int)lidar.RigLidar),l_val,r_val);
+
 	Motor_Set_Val(l_val,r_val);
 	
 	return 1;
@@ -168,6 +180,7 @@ uint8_t CarGoAhead_MPU(float val)
 	l_val = val - val_mpu  ;
 	r_val = val + val_mpu  ;
 	
+	//printf("l_val:		%f   r_val:		%f   sita:		%f\r\n",l_val,r_val,Car_stat.Car_Alpha);
 	Motor_Set_Val(l_val,r_val);
 
 	return 0;
@@ -175,7 +188,7 @@ uint8_t CarGoAhead_MPU(float val)
 }
 
 /**************************************************************************
-@bref: 	 走指定距离 (ec + MPU)
+@bref: 	 走指定距离 (ec + MPU)	sita + dis  ---> val  ---> pwm
 @para	：目标距离target_dis，限速（恒正）range_val
 @return :  void
 **************************************************************************/
@@ -221,7 +234,7 @@ uint8_t CarSetDis(float target_dis,float range_val)
 
 
 /**************************************************************************
-@bref   ：转向 (mpu + ec)
+@bref   ：转向 (mpu + ec)  sita --> val
 @para	：目标距离target_dis，限速（恒正）range_val
 @return :  void
 **************************************************************************/
@@ -236,13 +249,11 @@ uint8_t CarTurn(float target_sita,float actual_sita,float max_val,float min_val)
 	if(mpu_pid.err>=0 && mpu_pid.err < ALLOW_ERR_SITA){
 		Motor_Set(0,0);
 		PID_init();
-		printf("===========================");
 		return 1;
 	}
 	if(mpu_pid.err<0 && mpu_pid.err > -ALLOW_ERR_SITA){
 		Motor_Set(0,0);
 		PID_init();
-		printf("===========================");
 		return 1;
 	}
 	
@@ -254,7 +265,6 @@ uint8_t CarTurn(float target_sita,float actual_sita,float max_val,float min_val)
 	if( (val<0) && (val > -min_val) )val=-min_val;
 
 		
-	printf("sita:   %f    val:  %f \r\n",Car_stat.Car_Alpha,val);
 
 	
 	Motor_Set_Val(-val,val);
@@ -264,7 +274,7 @@ uint8_t CarTurn(float target_sita,float actual_sita,float max_val,float min_val)
 }
 
 /**************************************************************************
-@bref: 位置环 
+@bref: 位置环 :dis --> val
 @para	：目标距离target_dis，限速（恒正）range_val
 @return: void
 **************************************************************************/
@@ -305,7 +315,7 @@ uint8_t Motor_Set_Dis(float target_dis,float range_val)
 
  
 /**************************************************************************
-@bref: 速度环 
+@bref: 速度环 :val ---> pwm
 @para	：left_val,right_val
 @return: void
 **************************************************************************/
@@ -374,16 +384,17 @@ float PID_realize_mpu(Pid * pid,float sita)
 float PID_realize_lidar(Pid * pid)
 {
 	/*********************/
-	pid->actual_dis = lidar.LefLidar - lidar.RigLidar;
-	pid->target_dis = 0;
+	pid->lidar_err = ((int)lidar.LefLidar - (int)lidar.RigLidar);
 	/*********************/
 	
-	pid->err_sum += pid->err;//误差累计值 = 当前误差累计和
+	pid->err_sum += pid->lidar_err;//误差累计值 = 当前误差累计和
 	//使用PID控制 输出 = Kp*当前误差  +  Ki*误差累计值 + Kd*(当前误差-上次误差)
-	pid->output_val = pid->Kp*pid->err + pid->Ki*pid->err_sum + pid->Kd*(pid->err - pid->err_last);	
+	pid->output_val = pid->Kp*pid->lidar_err + pid->Ki*pid->err_sum + pid->Kd*(pid->lidar_err - pid->err_last);	
 	//保存上次误差: 这次误差赋值给上次误差
-	pid->err_last = pid->err;
+	pid->err_last = pid->lidar_err;
 
+	//printf("pid->actual_dis 		%f\r\n",pid->actual_dis);
+		
 	return pid->output_val;
 }
 

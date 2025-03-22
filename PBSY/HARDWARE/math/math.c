@@ -35,8 +35,6 @@ void Sliding_Window_Algorithm(int* ptr,int size,Lidar* lidar){
 }
 
 
-
-
 float GildeAverageValueFilter_float(float NewValue,float *Data,unsigned short int windows)
 {
   float max,min;

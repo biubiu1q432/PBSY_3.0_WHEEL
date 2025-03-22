@@ -72,7 +72,21 @@ static struct
 } g_atk_ms901m_fsr;                                 /* ATK-MS901M满量程数据 */
 
 
-/*角度归零*/
+
+/*滤掉无用信息*/
+void fliter_mpu_init(float* sita_fliter){
+
+    uint8_t ret = atk_ms901m_init();
+	for(int i =0;i < 2*FILTER_RANGE ;i++){
+		ret = atk_ms901m_get_attitude(&attitude_dat,MPU_MAX_WAIT);	
+		GildeAverageValueFilter_float(attitude_dat.yaw,sita_fliter,FILTER_RANGE);
+	}
+	
+}
+
+
+
+/*重置坐标系*/
 float atk_ms901m_sita_init(int repit){
 	float sita_init = 0;
 	float sita_arr[10]; 

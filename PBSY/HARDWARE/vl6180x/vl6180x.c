@@ -115,16 +115,15 @@ uint8_t VL6180X_Read_Range(uint8_t Turn)
 
 uint8_t VL6180X_WriteReg(uint16_t reg,uint8_t data,uint8_t Turn)
 {
-
-	if(Turn ==2)		HAL_I2C_Mem_Write(&hi2c2,(VL6180X_DEFAULT_I2C_ADDR<<1)|0,reg,I2C_MEMADD_SIZE_16BIT,&data,1,10);
-	else if(Turn == 1)HAL_I2C_Mem_Write(&hi2c1,(VL6180X_DEFAULT_I2C_ADDR<<1)|0,reg,I2C_MEMADD_SIZE_16BIT,&data,1,10);
+	if(Turn ==2)		HAL_I2C_Mem_Write(&hi2c2,(VL6180X_DEFAULT_I2C_ADDR<<1)|0,reg,I2C_MEMADD_SIZE_16BIT,&data,1,LIDAR_MAX_WAIT);
+	else if(Turn == 1)HAL_I2C_Mem_Write(&hi2c1,(VL6180X_DEFAULT_I2C_ADDR<<1)|0,reg,I2C_MEMADD_SIZE_16BIT,&data,1,LIDAR_MAX_WAIT);
 	return 0;
 }
 uint8_t VL6180X_ReadReg(uint16_t reg,uint8_t Turn)
 { 
 	uint8_t data;
-	if(Turn ==2)		HAL_I2C_Mem_Read(&hi2c2,(VL6180X_DEFAULT_I2C_ADDR<<1)|1,reg,I2C_MEMADD_SIZE_16BIT,&data,1,10);
-	else if(Turn == 1)HAL_I2C_Mem_Read(&hi2c1,(VL6180X_DEFAULT_I2C_ADDR<<1)|1,reg,I2C_MEMADD_SIZE_16BIT,&data,1,10);
+	if(Turn ==2)		HAL_I2C_Mem_Read(&hi2c2,(VL6180X_DEFAULT_I2C_ADDR<<1)|1,reg,I2C_MEMADD_SIZE_16BIT,&data,1,LIDAR_MAX_WAIT);
+	else if(Turn == 1)HAL_I2C_Mem_Read(&hi2c1,(VL6180X_DEFAULT_I2C_ADDR<<1)|1,reg,I2C_MEMADD_SIZE_16BIT,&data,1,LIDAR_MAX_WAIT);
 	return data;
 }
 
