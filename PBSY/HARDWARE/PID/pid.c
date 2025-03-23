@@ -13,10 +13,6 @@ Pid mpu_pid;
 Pid Lidar_pid;
 
 
-
-
-
-
 extern Motor_Stat LEFT_MOTOR;	/*左轮数据*/
 extern Motor_Stat RIG_MOTOR;	/*右轮数据*/
 extern CAR_STAT Car_stat;
@@ -51,7 +47,7 @@ void PID_init()
 	left_incremental_pid.err_sum=0.000;
 	left_incremental_pid.Kp=6;
 	left_incremental_pid.Ki=0.005;
-	left_incremental_pid.Kd=8;
+	left_incremental_pid.Kd=5;
 
 	right_incremental_pid.actual_val=0.000;
 	right_incremental_pid.target_val=0.000;
@@ -62,7 +58,7 @@ void PID_init()
 	right_incremental_pid.err_sum=0.000;
 	right_incremental_pid.Kp=6;
 	right_incremental_pid.Ki=0.005;
-	right_incremental_pid.Kd=8;
+	right_incremental_pid.Kd=5;
 	
 	//mpu
 	mpu_pid.target_sita=0.000;

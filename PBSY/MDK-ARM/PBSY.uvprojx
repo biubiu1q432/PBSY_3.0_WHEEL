@@ -670,6 +670,16 @@
               <FileType>5</FileType>
               <FilePath>..\HARDWARE\ATK_MW579\atk_mw579_uart.h</FilePath>
             </File>
+            <File>
+              <FileName>MyI2C.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\vl6180x\MyI2C.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyI2C.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\vl6180x\MyI2C.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -19,20 +19,20 @@ void Delayus(uint32_t usdelay)
 
 void MyI2C_W_SCL(uint8_t BitValue)
 {
-    HAL_GPIO_WritePin(SCL_GPIO_Port,SCL_Pin,(GPIO_PinState)BitValue);
+    //HAL_GPIO_WritePin(SCL_GPIO_Port,SCL_Pin,(GPIO_PinState)BitValue);
     Delayus(5);
 }
 
 void MyI2C_W_SDA(uint8_t BitValue)
 {
-    HAL_GPIO_WritePin(SDA_GPIO_Port,SDA_Pin,(GPIO_PinState)BitValue);
-    Delayus(5);
+    //HAL_GPIO_WritePin(SDA_GPIO_Port,SDA_Pin,(GPIO_PinState)BitValue);
+   Delayus(5);
 }
 
 uint8_t MyI2C_R_SDA(void)
 {
     uint8_t BitValue;
-    BitValue = (uint8_t)HAL_GPIO_ReadPin(SDA_GPIO_Port,SDA_Pin);
+    //BitValue = (uint8_t)HAL_GPIO_ReadPin(SDA_GPIO_Port,SDA_Pin);
     Delayus(5);
     return BitValue;
 }

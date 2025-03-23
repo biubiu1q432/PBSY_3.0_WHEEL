@@ -161,10 +161,12 @@ typedef struct
 #define LIDAR_MAX_WAIT 5
 
 
+//软硬I2C 	1：软 2：硬
+#define I2CHARDWARE 1
 
 
 //DEBUG 2or4
-#define UART_PRINT 4
+#define UART_PRINT 2
 #define ISBLUE 0 // 1 or 0
 #define BLE_NAME 			"BLUE_DEBUG"
 #define BLE_HELLO 		"BLUE_DEBUG\r\n"

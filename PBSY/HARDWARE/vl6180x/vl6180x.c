@@ -102,6 +102,7 @@ uint8_t VL6180X_Read_ID(uint8_t Turn)
 
 uint8_t VL6180X_Read_Range(uint8_t Turn)
 {
+	
 	uint8_t range = 0;
 	while(!(VL6180X_ReadReg(VL6180X_REG_RESULT_RANGE_STATUS,Turn) & 0x01));
 	VL6180X_WriteReg(VL6180X_REG_SYSRANGE_START,0x01,Turn);
@@ -115,16 +116,71 @@ uint8_t VL6180X_Read_Range(uint8_t Turn)
 
 uint8_t VL6180X_WriteReg(uint16_t reg,uint8_t data,uint8_t Turn)
 {
+
+#if I2CHARDWARE == 1	
+
 	if(Turn ==2)		HAL_I2C_Mem_Write(&hi2c2,(VL6180X_DEFAULT_I2C_ADDR<<1)|0,reg,I2C_MEMADD_SIZE_16BIT,&data,1,LIDAR_MAX_WAIT);
 	else if(Turn == 1)HAL_I2C_Mem_Write(&hi2c1,(VL6180X_DEFAULT_I2C_ADDR<<1)|0,reg,I2C_MEMADD_SIZE_16BIT,&data,1,LIDAR_MAX_WAIT);
 	return 0;
+
+#elif	I2CHARDWARE == 2
+	
+	uint8_t Index_H = (uint8_t)(RegAddress >> 8);//高8位
+	uint8_t Index_L = (uint8_t)(RegAddress & 0xFF);//低8位
+	
+	MyI2C_Start();
+	MyI2C_SendByte((VL6180X_DEFAULT_I2C_ADDR<<1)|0);
+	if(MyI2C_ReceiveAck())	//等待应答
+	{
+		MyI2C_Stop();	
+		return 1;		
+	}
+	MyI2C_SendByte(Index_H);
+	MyI2C_ReceiveAck();	//等待ACK
+	MyI2C_SendByte(Index_L);
+	MyI2C_ReceiveAck();	//等待ACK
+	MyI2C_SendByte(Data);
+	if(MyI2C_ReceiveAck())	//等待ACK
+	{
+		MyI2C_Stop();	 
+		return 1;		 
+	}
+	MyI2C_Stop();
+	return 0;	
+	
+#endif	
 }
 uint8_t VL6180X_ReadReg(uint16_t reg,uint8_t Turn)
 { 
+	
+#if I2CHARDWARE == 1	
+	
 	uint8_t data;
 	if(Turn ==2)		HAL_I2C_Mem_Read(&hi2c2,(VL6180X_DEFAULT_I2C_ADDR<<1)|1,reg,I2C_MEMADD_SIZE_16BIT,&data,1,LIDAR_MAX_WAIT);
 	else if(Turn == 1)HAL_I2C_Mem_Read(&hi2c1,(VL6180X_DEFAULT_I2C_ADDR<<1)|1,reg,I2C_MEMADD_SIZE_16BIT,&data,1,LIDAR_MAX_WAIT);
 	return data;
+ 
+#elif	 I2CHARDWARE == 2
+
+	uint8_t Data;
+	uint8_t Index_H = (uint8_t)(RegAddress >> 8);
+	uint8_t Index_L = (uint8_t)(RegAddress & 0xff);
+	MyI2C_Start(); 
+	MyI2C_SendByte((VL6180X_DEFAULT_I2C_ADDR<<1)|0);//发送器件地址+写命令	
+	MyI2C_ReceiveAck();		//等待应答 
+	MyI2C_SendByte(Index_H);	//写寄存器地址
+	MyI2C_ReceiveAck();		//等待应答
+	MyI2C_SendByte(Index_L);	//写寄存器地址
+	MyI2C_ReceiveAck();	
+	
+	MyI2C_Start();
+	MyI2C_SendByte((VL6180X_DEFAULT_I2C_ADDR<<1)|1);//发送器件地址+读命令	
+	MyI2C_ReceiveAck();		//等待应答 
+	Data=MyI2C_ReceiveByte();//读取数据,发送nACK 
+	MyI2C_Stop();			//产生一个停止条件 
+	return Data;
+	
+#endif
 }
 
 

@@ -338,20 +338,22 @@ void Read_Lidar(void *argument)
     VL6180X_Init(1);
     VL6180X_Init(2);
     
-	taskENTER_CRITICAL();
-	VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
-	taskEXIT_CRITICAL();
+//	taskENTER_CRITICAL();
+//	VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
+//	taskEXIT_CRITICAL();
     
 	/* Infinite loop */
     for(;;)
     {
-        taskENTER_CRITICAL();
-		lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
-        lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
-		taskEXIT_CRITICAL();
-        
-		Sliding_Window_Algorithm(Queue_lidar,q_size,&lidar);
-        vTaskDelay(pdMS_TO_TICKS(35));
+//        taskENTER_CRITICAL();
+//		lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
+//        lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
+//		taskEXIT_CRITICAL();      
+//		Sliding_Window_Algorithm(Queue_lidar,q_size,&lidar);
+       
+		
+		
+		vTaskDelay(pdMS_TO_TICKS(35));
     }
   /* USER CODE END Read_Lidar */
 }
@@ -374,7 +376,10 @@ void Move_Control(void *argument)
 
         CarStat_Get();
 		CarStatParmPrint();
-
+		
+		Motor_Set_Val(15,0);
+		
+		
         if(move_task_stat.AHEAD_FLAG) {
             uint8_t ret = CarGoAhead(TargetPara.ARG_VAL);
             if(ret) {
