@@ -2,9 +2,11 @@
 "test\startup_stm32f103xe.o"
 "test\main.o"
 "test\gpio.o"
+"test\usart.o"
 "test\stm32f1xx_it.o"
 "test\stm32f1xx_hal_msp.o"
 "test\stm32f1xx_hal_gpio_ex.o"
+"test\stm32f1xx_hal_uart.o"
 "test\stm32f1xx_hal.o"
 "test\stm32f1xx_hal_rcc.o"
 "test\stm32f1xx_hal_rcc_ex.o"
@@ -16,6 +18,8 @@
 "test\stm32f1xx_hal_flash_ex.o"
 "test\stm32f1xx_hal_exti.o"
 "test\system_stm32f1xx.o"
+"test\atk_mw579.o"
+"test\atk_mw579_uart.o"
 --strict --scatter "TEST\TEST.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

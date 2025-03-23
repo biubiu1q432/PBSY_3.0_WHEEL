@@ -57,7 +57,9 @@ char ORDER_DATA[ODER_DATA_SIZE];
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart2_rx;
 
-
+#if ISBLUE == 1
+extern uint8_t blue_tmp;
+#endif
 
 /* USER CODE END PV */
 
@@ -117,7 +119,8 @@ int main(void)
 
 
     HAL_UART_Receive_IT(&huart5,mpu_once_isr_data,MPU_ISR_TRIG);//mpu
-    HAL_UART_Receive_IT(&huart4,&TEST,1);//DEBUG
+
+
 
     HAL_UARTEx_ReceiveToIdle_DMA(&huart1,CARD_DATA,sizeof(CARD_DATA));//CARD
     __HAL_DMA_DISABLE_IT(&hdma_usart1_rx,DMA_IT_HT);
@@ -131,6 +134,21 @@ int main(void)
     HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
     HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_4);
+
+
+#if ISBLUE == 1
+	#include "atk_mw579_uart.h"
+	#include "atk_mw579.h"
+	HAL_UART_Receive_IT(&huart4,&blue_tmp,1);
+	BlueInit();
+	//atk_mw579_uart_printf("！！！！！！！！！！！！！\r\n");
+#endif 
+
+
+
+
+
+
 
 
   /* USER CODE END 2 */

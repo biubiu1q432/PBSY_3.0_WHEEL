@@ -41,7 +41,9 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-
+#define DEMO_BLE_NAME           "ATK-MW578"        /* 蓝牙名称 */
+#define DEMO_BLE_HELLO          "HELLO ATK-MW579"  /* 开机欢迎语 */
+#define DEMO_BLE_ADPTIM         5                   /* 广播速度 */
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

@@ -263,6 +263,18 @@ void UART4_IRQHandler(void)
   HAL_UART_IRQHandler(&huart4);
   /* USER CODE BEGIN UART4_IRQn 1 */
 
+#if ISBLUE == 1
+	extern struct rx_frame g_uart_rx_frame;
+	#include "atk_mw579_uart.h"
+	#include "atk_mw579.h"
+	//串口接收移位寄存器由忙碌到空闲触发
+	if (__HAL_UART_GET_FLAG(&huart4, UART_FLAG_IDLE) != RESET)       /* UART总线空闲中断(	一段时间内没有接收到数据	) */
+	{
+			g_uart_rx_frame.sta.finsh = 1;                                      /* 标记帧接收完成 */
+			__HAL_UART_CLEAR_IDLEFLAG(&huart4);                          /* 清除UART总线空闲中断 */
+	}
+#endif
+	
   /* USER CODE END UART4_IRQn 1 */
 }
 

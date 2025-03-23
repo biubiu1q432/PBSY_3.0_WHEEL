@@ -22,11 +22,15 @@
 #include "stm32f1xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "atk_mw579_uart.h"
+#include "usart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
-
+extern struct rx_frame g_uart_rx_frame;
+extern uint8_t tmp;
+extern UART_HandleTypeDef huart4;
 /* USER CODE END TD */
 
 /* Private define ------------------------------------------------------------*/
@@ -55,7 +59,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-
+extern UART_HandleTypeDef huart4;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -198,6 +202,48 @@ void SysTick_Handler(void)
 /* please refer to the startup file (startup_stm32f1xx.s).                    */
 /******************************************************************************/
 
+/**
+  * @brief This function handles UART4 global interrupt.
+  */
+void UART4_IRQHandler(void)
+{
+  /* USER CODE BEGIN UART4_IRQn 0 */
+
+  /* USER CODE END UART4_IRQn 0 */
+  HAL_UART_IRQHandler(&huart4);
+  /* USER CODE BEGIN UART4_IRQn 1 */
+	
+	//串口接收移位寄存器由忙碌到空闲触发
+	if (__HAL_UART_GET_FLAG(&huart4, UART_FLAG_IDLE) != RESET)       /* UART总线空闲中断(	一段时间内没有接收到数据	) */
+	{
+			g_uart_rx_frame.sta.finsh = 1;                                      /* 标记帧接收完成 */
+			__HAL_UART_CLEAR_IDLEFLAG(&huart4);                          /* 清除UART总线空闲中断 */
+	}
+  
+	/* USER CODE END UART4_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+			
+			if(huart==&huart4){
+			
+				HAL_UART_Receive_IT(&huart4, &tmp, 1);           /* 使能寄存器非空中断*/
+				
+				if (g_uart_rx_frame.sta.len < (ATK_MW579_UART_RX_BUF_SIZE - 1))     /* 判断UART接收缓冲是否溢出*/																																																																		
+				{
+						g_uart_rx_frame.buf[g_uart_rx_frame.sta.len] = tmp;             /* 将接收到的数据写入缓冲 */
+						g_uart_rx_frame.sta.len++;                                      /* 更新接收到的数据长度 */
+				}
+				else                                                                /* UART接收缓冲溢出 */
+				{
+						g_uart_rx_frame.sta.len = 0;                                    /* 覆盖之前收到的数据 */
+						g_uart_rx_frame.buf[g_uart_rx_frame.sta.len] = tmp;             /* 将接收到的数据写入缓冲 */
+						g_uart_rx_frame.sta.len++;                                      /* 更新接收到的数据长度 */
+				}
+			
+			}
+	
+} 
 /* USER CODE END 1 */

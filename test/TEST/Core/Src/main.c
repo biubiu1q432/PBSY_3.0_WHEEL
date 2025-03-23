@@ -18,15 +18,23 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "atk_mw579_uart.h"
+#include "atk_mw579.h"
+#include "string.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+extern UART_HandleTypeDef huart4;
+uint8_t tmp;
+uint8_t ret = 0;
+extern struct rx_frame g_uart_rx_frame;
 
 /* USER CODE END PTD */
 
@@ -86,7 +94,26 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_UART4_Init();
   /* USER CODE BEGIN 2 */
+	HAL_UART_Receive_IT(&huart4, &tmp, 1); 
+	
+	atk_mw579_init(ATK_MW579_UART_BAUDRATE_115200);
+	atk_mw579_enter_config_mode();
+	ret  = atk_mw579_set_name(DEMO_BLE_NAME);								//设置ATK-MW579蓝牙名称
+	ret += atk_mw579_set_hello(DEMO_BLE_HELLO);							//设置ATK-MW579开机欢迎语
+	ret += atk_mw579_set_tpl(ATK_MW579_TPL_P0DBM);					//设置ATK-MW579发射功率
+	ret += atk_mw579_set_uart(ATK_MW579_UART_BAUDRATE_115200, ATK_MW579_UART_DATA_8, ATK_MW579_UART_PARI_NONE, ATK_MW579_UART_STOP_1);//设置ATK-MW579串口参数
+	ret += atk_mw579_set_adptim(DEMO_BLE_ADPTIM);						//设置ATK-MW579广播速度
+	ret += atk_mw579_set_linkpassen(ATK_MW579_LINKPASSEN_OFF);//设置ATK-MW579链路匹配
+	ret += atk_mw579_set_leden(ATK_MW579_LEDEN_ON);					//设置ATK-MW579板载LED
+	ret += atk_mw579_set_slavesleepen(ATK_MW579_SLAVESLEEPEN_OFF);//设置ATK-MW579从设备断连睡眠
+	ret += atk_mw579_set_maxput(ATK_MW579_MAXPUT_OFF);			//设置ATK-MW579通信最大输出
+	ret += atk_mw579_set_mode(ATK_MW579_MODE_S);						//设置ATK-MW579工作模式
+	
+	atk_mw579_uart_rx_restart(); /* 重新开始接收数据 */
+
+	
 
   /* USER CODE END 2 */
 
@@ -96,9 +123,12 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
+	  
+	  
     /* USER CODE BEGIN 3 */
-	 HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+		atk_mw579_uart_printf("rightee\r\n");
 	  HAL_Delay(100);
+
   }
   /* USER CODE END 3 */
 }

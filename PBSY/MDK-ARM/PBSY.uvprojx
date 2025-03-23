@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xE</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../HARDWARE/ATK_MS901M;../SYSTEM/Soft_Delay;../HARDWARE/math;../HARDWARE/vl6180x;../HARDWARE/motor;../HARDWARE/PID</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../HARDWARE/ATK_MS901M;../SYSTEM/Soft_Delay;../HARDWARE/math;../HARDWARE/vl6180x;../HARDWARE/motor;../HARDWARE/PID;..\HARDWARE\ATK_MW579</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -649,6 +649,26 @@
               <FileName>pid.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\HARDWARE\PID\pid.h</FilePath>
+            </File>
+            <File>
+              <FileName>atk_mw579.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\ATK_MW579\atk_mw579.c</FilePath>
+            </File>
+            <File>
+              <FileName>atk_mw579.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\ATK_MW579\atk_mw579.h</FilePath>
+            </File>
+            <File>
+              <FileName>atk_mw579_uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\ATK_MW579\atk_mw579_uart.c</FilePath>
+            </File>
+            <File>
+              <FileName>atk_mw579_uart.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\ATK_MW579\atk_mw579_uart.h</FilePath>
             </File>
           </Files>
         </Group>

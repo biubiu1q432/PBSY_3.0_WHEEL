@@ -36,6 +36,8 @@
 #include "semphr.h"
 #include "queue.h"
 #include "pid.h"
+#include "atk_mw579_uart.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,6 +59,12 @@ void CarStatParmPrint(void);
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+
+
+#if ISBLUE == 1
+uint8_t blue_tmp;
+#endif
+
 
 //MPU
 float sita;
@@ -365,7 +373,7 @@ void Move_Control(void *argument)
     {
 
         CarStat_Get();
-		
+		CarStatParmPrint();
 
         if(move_task_stat.AHEAD_FLAG) {
             uint8_t ret = CarGoAhead(TargetPara.ARG_VAL);
@@ -509,8 +517,30 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
         }
 
     }
+	
+	
+	//BLUE
+#if ISBLUE == 1
+	extern struct rx_frame g_uart_rx_frame;
+	if(huart==&huart4){
+			
+		HAL_UART_Receive_IT(&huart4, &blue_tmp, 1);           /* 使能寄存器非空中断*/
+		
+		if (g_uart_rx_frame.sta.len < (ATK_MW579_UART_RX_BUF_SIZE - 1))     /* 判断UART接收缓冲是否溢出*/																																																																		
+		{
+				g_uart_rx_frame.buf[g_uart_rx_frame.sta.len] = blue_tmp;             /* 将接收到的数据写入缓冲 */
+				g_uart_rx_frame.sta.len++;                                      /* 更新接收到的数据长度 */
+		}
+		else                                                                /* UART接收缓冲溢出 */
+		{
+				g_uart_rx_frame.sta.len = 0;                                    /* 覆盖之前收到的数据 */
+				g_uart_rx_frame.buf[g_uart_rx_frame.sta.len] = blue_tmp;             /* 将接收到的数据写入缓冲 */
+				g_uart_rx_frame.sta.len++;                                      /* 更新接收到的数据长度 */
+		}
+	
+	}
 
-
+#endif
 }
 
 /*

@@ -116,6 +116,8 @@ void Error_Handler(void);
 #define L_SDA_Pin GPIO_PIN_9
 #define L_SDA_GPIO_Port GPIOB
 
+
+
 /* USER CODE BEGIN Private defines */
 
 
@@ -161,8 +163,12 @@ typedef struct
 
 
 
-//UART 2or4
-#define UART_PRINT 2
+//DEBUG 2or4
+#define UART_PRINT 4
+#define ISBLUE 0 // 1 or 0
+#define BLE_NAME 			"BLUE_DEBUG"
+#define BLE_HELLO 		"BLUE_DEBUG\r\n"
+
 
 //PWM
 #define MAX_PWM 1000

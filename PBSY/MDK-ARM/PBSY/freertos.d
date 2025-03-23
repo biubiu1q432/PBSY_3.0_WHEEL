@@ -56,3 +56,4 @@ pbsy\freertos.o: ../Core/Inc/dma.h
 pbsy\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h
 pbsy\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h
 pbsy\freertos.o: ../HARDWARE/PID/pid.h
+pbsy\freertos.o: ..\HARDWARE\ATK_MW579\atk_mw579_uart.h
