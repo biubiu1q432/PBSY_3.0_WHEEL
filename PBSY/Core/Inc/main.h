@@ -55,7 +55,7 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+void CarInit(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -116,8 +116,6 @@ void Error_Handler(void);
 #define L_SDA_Pin GPIO_PIN_9
 #define L_SDA_GPIO_Port GPIOB
 
-
-
 /* USER CODE BEGIN Private defines */
 
 
@@ -142,8 +140,8 @@ typedef struct
 	bool DIS_FLAG;
 
 } MOVE_TASK_STAT;
-#define MPU_WEIGHT_FOR_VAL 0.7
-#define LIDAR_WEIGHT_FOR_VAL 0.3
+#define MPU_WEIGHT_FOR_VAL 0.85
+#define LIDAR_WEIGHT_FOR_VAL 0.15
 
 
 //Lidar
@@ -161,8 +159,8 @@ typedef struct
 #define LIDAR_MAX_WAIT 5
 
 
-//软硬I2C 	1：软 2：硬
-#define I2CHARDWARE 1
+//软硬I2C 	1：硬 2：软
+#define I2CHARDWARE 2
 
 
 //DEBUG 2or4
@@ -179,7 +177,7 @@ typedef struct
 
 //EC
 #define EC_ARR	65535		
-#define ENCODER_TIME 0.050
+#define ENCODER_TIME 0.040
 #define LEFT_EC_1	1400			
 #define RIGHT_EC_1	1400				
 #define PI		3.1415926			

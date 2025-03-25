@@ -1,7 +1,9 @@
 #include "vl6180x.h"
+
+#if I2CHARDWARE == 1
 extern I2C_HandleTypeDef hi2c2;
 extern I2C_HandleTypeDef hi2c1;
-
+#endif
 
 /*
 @breif  距离标定
@@ -21,6 +23,7 @@ void VL6180X_Range_Cailbration(Lidar *lidar,int Cailbration_dis,uint8_t repit){
 	for(int i = 1;i<=repit;i++) sum += VL6180X_Read_Range(2);
 	dis = sum/repit;
 	lidar->Rig_Cali = dis - Cailbration_dis;
+
 }
 
 
@@ -125,27 +128,27 @@ uint8_t VL6180X_WriteReg(uint16_t reg,uint8_t data,uint8_t Turn)
 
 #elif	I2CHARDWARE == 2
 	
-	uint8_t Index_H = (uint8_t)(RegAddress >> 8);//高8位
-	uint8_t Index_L = (uint8_t)(RegAddress & 0xFF);//低8位
+	uint8_t Index_H = (uint8_t)(reg >> 8);//高8位
+	uint8_t Index_L = (uint8_t)(reg & 0xFF);//低8位
 	
-	MyI2C_Start();
-	MyI2C_SendByte((VL6180X_DEFAULT_I2C_ADDR<<1)|0);
-	if(MyI2C_ReceiveAck())	//等待应答
+	MyI2C_Start(Turn);
+	MyI2C_SendByte((VL6180X_DEFAULT_I2C_ADDR<<1)|0,Turn);
+	if(MyI2C_ReceiveAck(Turn))	//等待应答
 	{
-		MyI2C_Stop();	
+		MyI2C_Stop(Turn);	
 		return 1;		
 	}
-	MyI2C_SendByte(Index_H);
-	MyI2C_ReceiveAck();	//等待ACK
-	MyI2C_SendByte(Index_L);
-	MyI2C_ReceiveAck();	//等待ACK
-	MyI2C_SendByte(Data);
-	if(MyI2C_ReceiveAck())	//等待ACK
+	MyI2C_SendByte(Index_H,Turn);
+	MyI2C_ReceiveAck(Turn);	//等待ACK
+	MyI2C_SendByte(Index_L,Turn);
+	MyI2C_ReceiveAck(Turn);	//等待ACK
+	MyI2C_SendByte(data,Turn);
+	if(MyI2C_ReceiveAck(Turn))	//等待ACK
 	{
-		MyI2C_Stop();	 
+		MyI2C_Stop(Turn);	 
 		return 1;		 
 	}
-	MyI2C_Stop();
+	MyI2C_Stop(Turn);
 	return 0;	
 	
 #endif	
@@ -163,21 +166,21 @@ uint8_t VL6180X_ReadReg(uint16_t reg,uint8_t Turn)
 #elif	 I2CHARDWARE == 2
 
 	uint8_t Data;
-	uint8_t Index_H = (uint8_t)(RegAddress >> 8);
-	uint8_t Index_L = (uint8_t)(RegAddress & 0xff);
-	MyI2C_Start(); 
-	MyI2C_SendByte((VL6180X_DEFAULT_I2C_ADDR<<1)|0);//发送器件地址+写命令	
-	MyI2C_ReceiveAck();		//等待应答 
-	MyI2C_SendByte(Index_H);	//写寄存器地址
-	MyI2C_ReceiveAck();		//等待应答
-	MyI2C_SendByte(Index_L);	//写寄存器地址
-	MyI2C_ReceiveAck();	
+	uint8_t Index_H = (uint8_t)(reg >> 8);
+	uint8_t Index_L = (uint8_t)(reg & 0xff);
+	MyI2C_Start(Turn); 
+	MyI2C_SendByte((VL6180X_DEFAULT_I2C_ADDR<<1)|0,Turn);//发送器件地址+写命令	
+	MyI2C_ReceiveAck(Turn);		//等待应答 
+	MyI2C_SendByte(Index_H,Turn);	//写寄存器地址
+	MyI2C_ReceiveAck(Turn);		//等待应答
+	MyI2C_SendByte(Index_L,Turn);	//写寄存器地址
+	MyI2C_ReceiveAck(Turn);	
 	
-	MyI2C_Start();
-	MyI2C_SendByte((VL6180X_DEFAULT_I2C_ADDR<<1)|1);//发送器件地址+读命令	
-	MyI2C_ReceiveAck();		//等待应答 
-	Data=MyI2C_ReceiveByte();//读取数据,发送nACK 
-	MyI2C_Stop();			//产生一个停止条件 
+	MyI2C_Start(Turn);
+	MyI2C_SendByte((VL6180X_DEFAULT_I2C_ADDR<<1)|1,Turn);//发送器件地址+读命令	
+	MyI2C_ReceiveAck(Turn);		//等待应答 
+	Data=MyI2C_ReceiveByte(Turn);//读取数据,发送nACK 
+	MyI2C_Stop(Turn);			//产生一个停止条件 
 	return Data;
 	
 #endif

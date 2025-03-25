@@ -267,11 +267,11 @@ void UART4_IRQHandler(void)
 	extern struct rx_frame g_uart_rx_frame;
 	#include "atk_mw579_uart.h"
 	#include "atk_mw579.h"
-	//´®¿Ú½ÓÊÕÒÆÎ»¼Ä´æÆ÷ÓÉÃ¦Âµµ½¿ÕÏÐ´¥·¢
-	if (__HAL_UART_GET_FLAG(&huart4, UART_FLAG_IDLE) != RESET)       /* UART×ÜÏß¿ÕÏÐÖÐ¶Ï(	Ò»¶ÎÊ±¼äÄÚÃ»ÓÐ½ÓÊÕµ½Êý¾Ý	) */
+	//ï¿½ï¿½ï¿½Ú½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½Ã¦Âµï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½
+	if (__HAL_UART_GET_FLAG(&huart4, UART_FLAG_IDLE) != RESET)       /* UARTï¿½ï¿½ï¿½ß¿ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½(	Ò»ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½	) */
 	{
-			g_uart_rx_frame.sta.finsh = 1;                                      /* ±ê¼ÇÖ¡½ÓÊÕÍê³É */
-			__HAL_UART_CLEAR_IDLEFLAG(&huart4);                          /* Çå³ýUART×ÜÏß¿ÕÏÐÖÐ¶Ï */
+			g_uart_rx_frame.sta.finsh = 1;                                      /* ï¿½ï¿½ï¿½Ö¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
+			__HAL_UART_CLEAR_IDLEFLAG(&huart4);                          /* ï¿½ï¿½ï¿½UARTï¿½ï¿½ï¿½ß¿ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ */
 	}
 #endif
 	

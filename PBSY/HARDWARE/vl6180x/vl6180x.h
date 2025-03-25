@@ -6,9 +6,11 @@
 #include <string.h>
 #include <stdio.h>
 #include "MyI2C.h"
+
+
+#if I2CHARDWARE == 1
 #include "i2c.h"
-
-
+#endif
 
 
 #define	VL6180X_DEFAULT_ID						0xB4

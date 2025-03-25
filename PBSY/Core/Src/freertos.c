@@ -37,6 +37,7 @@
 #include "queue.h"
 #include "pid.h"
 #include "atk_mw579_uart.h"
+#include "atk_mw579.h"
 
 /* USER CODE END Includes */
 
@@ -65,6 +66,9 @@ void CarStatParmPrint(void);
 uint8_t blue_tmp;
 #endif
 
+
+bool mpu_isReady = false;
+bool lidar_isReady = false;
 
 //MPU
 float sita;
@@ -261,7 +265,7 @@ void Get_Task(void *argument)
 		
 	
 		//RECIEVE
-		if(xSemaphoreTake(TASK_FLAGHandle,1) == pdTRUE){
+		if(xSemaphoreTake(TASK_FLAGHandle,100) == pdTRUE){
 
 			char task_seg[3];
 			float value1, value2;
@@ -277,12 +281,15 @@ void Get_Task(void *argument)
 			//	Turn
 			else if (strcmp(task_seg, "2") == 0) {
 				TargetPara.MAX_VAL = value2;
-				TargetPara.SITA = value1;
+				TargetPara.SITA = value1 + Car_stat.Car_Alpha;
+				
+				if(TargetPara.SITA > 180.f)TargetPara.SITA = (TargetPara.SITA - 180.f) - 180.f ;
+				
+				printf("GET ORFER !!!!!!!   TURN VAL : %f  TARGET SITA:  %f\r\n",value2,value1);
 				move_task_stat.TURN_FLAG = true;
 			} 
-			
+			// Dis
 			else if (strcmp(task_seg, "3") == 0) {
-				// Dis
 				TargetPara.DIS  = value1;
 				TargetPara.MAX_VAL = value2;
 				move_task_stat.DIS_FLAG = true;
@@ -290,7 +297,9 @@ void Get_Task(void *argument)
 
 
 		}
-        vTaskDelay(pdMS_TO_TICKS(100));
+        
+		
+		vTaskDelay(pdMS_TO_TICKS(100));
 
 
     }
@@ -307,19 +316,30 @@ void Get_Task(void *argument)
 void Read_MPU(void *argument)
 {
   /* USER CODE BEGIN Read_MPU */
-
-    uint8_t ret = atk_ms901m_init();
+	
+	uint8_t cnt = 0;
+	uint8_t ret = atk_ms901m_init();
     float sita_init = atk_ms901m_sita_init(20);
     Car_stat.Car_LastAlpha = sita_init;
-    float sita_fliter[FILTER_RANGE] = {sita_init,sita_init,sita_init,sita_init,sita_init};
+	float sita_fliter[FILTER_RANGE] = {Car_stat.Car_LastAlpha,Car_stat.Car_LastAlpha,Car_stat.Car_LastAlpha,Car_stat.Car_LastAlpha,Car_stat.Car_LastAlpha};
 
-    /* Infinite loop */
+#if ISBLUE == 1
+	HAL_UART_Receive_IT(&huart4,&blue_tmp,1);
+	BlueInit();
+#endif 
+	
+	/* Infinite loop */
     for(;;)
     {
-        uint8_t	ret = atk_ms901m_get_attitude(&attitude_dat,MPU_MAX_WAIT);
-        float tmp_sita = attitude_dat.yaw;
-        Car_stat.Car_Alpha = GildeAverageValueFilter_float(tmp_sita,sita_fliter,FILTER_RANGE) - Car_stat.Car_LastAlpha;
-        vTaskDelay(pdMS_TO_TICKS(20));
+		
+		uint8_t	ret = atk_ms901m_get_attitude(&attitude_dat,MPU_MAX_WAIT);
+        		
+		Car_stat.Car_Alpha = GildeAverageValueFilter_float(attitude_dat.yaw,sita_fliter,FILTER_RANGE);
+
+				
+		cnt +=1;
+		if(cnt == 1)mpu_isReady = true;
+		vTaskDelay(pdMS_TO_TICKS(20));
     }
   /* USER CODE END Read_MPU */
 }
@@ -334,26 +354,24 @@ void Read_MPU(void *argument)
 void Read_Lidar(void *argument)
 {
   /* USER CODE BEGIN Read_Lidar */
+	uint8_t cnt = 0;
 
-    VL6180X_Init(1);
-    VL6180X_Init(2);
-    
-//	taskENTER_CRITICAL();
-//	VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
-//	taskEXIT_CRITICAL();
-    
+	VL6180X_Init(1);
+	VL6180X_Init(2);		
+	VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
+
+	
 	/* Infinite loop */
     for(;;)
     {
-//        taskENTER_CRITICAL();
-//		lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
-//        lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
-//		taskEXIT_CRITICAL();      
-//		Sliding_Window_Algorithm(Queue_lidar,q_size,&lidar);
+		lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
+		lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
+		Sliding_Window_Algorithm(Queue_lidar,q_size,&lidar);
        
 		
-		
-		vTaskDelay(pdMS_TO_TICKS(35));
+		cnt+=1;
+		if(cnt ==1)	lidar_isReady = true;
+		vTaskDelay(pdMS_TO_TICKS(20));
     }
   /* USER CODE END Read_Lidar */
 }
@@ -367,20 +385,26 @@ void Read_Lidar(void *argument)
 /* USER CODE END Header_Move_Control */
 void Move_Control(void *argument)
 {
-  /* USER CODE BEGIN Move_Control */
+	/* USER CODE BEGIN Move_Control */
     PID_init();
-    /* Infinite loop */
+	while(lidar_isReady != true || mpu_isReady != true)vTaskDelay(pdMS_TO_TICKS(50));
+	printf("ALL_IS_READEY !!!\r\n");
+	
+	
+	/* Infinite loop */
     
+	
 	for(;;)
     {
 
-        CarStat_Get();
+		CarStat_Get();
+		HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+		
 		CarStatParmPrint();
 		
-		Motor_Set_Val(15,0);
 		
-		
-        if(move_task_stat.AHEAD_FLAG) {
+        
+		if(move_task_stat.AHEAD_FLAG) {
             uint8_t ret = CarGoAhead(TargetPara.ARG_VAL);
             if(ret) {
                 move_task_stat.AHEAD_FLAG = false;
@@ -422,7 +446,7 @@ void Move_Control(void *argument)
 
 
 
-        vTaskDelay(pdMS_TO_TICKS(50));
+        vTaskDelay(pdMS_TO_TICKS(40));
 
 
     }
@@ -461,14 +485,21 @@ void Read_ID(void *argument)
 /*调试*/
 void CarStatParmPrint(void) {
 
-    printf("SITA:   %f   	DIS:	%f		L_VAL:  %f		R_VAL:   %f 	L_LIDAR:	%d  	  RIG_LIDAR: %d	\r\n",
-           Car_stat.Car_Alpha,
-           Car_stat.Car_Dis,
-           LEFT_MOTOR.Motorspeed,
-           RIG_MOTOR.Motorspeed,
-           lidar.LefLidar,
-           lidar.RigLidar);
-
+//    printf("SITA:   %f   TARGET_SITA	%f   	DIS:  %f	 L_VAL: %f	R_VAL:  %f 	L_LIDAR:%d  RIG_LIDAR: %d	\r\n",
+//			   Car_stat.Car_Alpha,
+//			   TargetPara.SITA,
+//			   Car_stat.Car_Dis,
+//			   LEFT_MOTOR.Motorspeed,
+//			   RIG_MOTOR.Motorspeed,
+//			   lidar.LefLidar,
+//			   lidar.RigLidar);
+	
+	
+	float err_test = (TargetPara.SITA - Car_stat.Car_Alpha);
+	if(err_test < -180.f) err_test = (180.f - Car_stat.Car_Alpha) +  (180.f + TargetPara.SITA);
+	if(err_test > 180.f)  err_test = (180.f + Car_stat.Car_Alpha) + (180.f - TargetPara.SITA);
+	
+	printf("sita:  %f	target_Sita  %f  err:  %f  \r\n",Car_stat.Car_Alpha,TargetPara.SITA,err_test);
 
 }
 

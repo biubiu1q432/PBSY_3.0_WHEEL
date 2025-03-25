@@ -36,7 +36,6 @@ void PID_init()
 	local_pid.Ki=0.01;
 	local_pid.Kd=-2;
 
-	
 	//增量式
 	left_incremental_pid.actual_val=0.000;
 	left_incremental_pid.target_val=0.000;
@@ -45,9 +44,9 @@ void PID_init()
 	left_incremental_pid.err_last=0.000;
 	left_incremental_pid.err_pre=0.000;
 	left_incremental_pid.err_sum=0.000;
-	left_incremental_pid.Kp=6;
+	left_incremental_pid.Kp=4;
 	left_incremental_pid.Ki=0.005;
-	left_incremental_pid.Kd=5;
+	left_incremental_pid.Kd=6;
 
 	right_incremental_pid.actual_val=0.000;
 	right_incremental_pid.target_val=0.000;
@@ -56,9 +55,9 @@ void PID_init()
 	right_incremental_pid.err_last=0.000;
 	right_incremental_pid.err_pre=0.000;
 	right_incremental_pid.err_sum=0.000;
-	right_incremental_pid.Kp=6;
+	right_incremental_pid.Kp=4;
 	right_incremental_pid.Ki=0.005;
-	right_incremental_pid.Kd=5;
+	right_incremental_pid.Kd=6;
 	
 	//mpu
 	mpu_pid.target_sita=0.000;
@@ -68,10 +67,9 @@ void PID_init()
 	mpu_pid.err_last=0.000;
 	mpu_pid.err_pre=0.000;
 	mpu_pid.err_sum=0.000;
-	mpu_pid.Kp=0.42;
-	mpu_pid.Ki=0.0015;
-	mpu_pid.Kd=1;
-
+	mpu_pid.Kp=0.235;
+	mpu_pid.Ki=0.0011;
+	mpu_pid.Kd=0.10;
 
 	//lidar
 	Lidar_pid.target_dis=0.000;
@@ -80,10 +78,9 @@ void PID_init()
 	Lidar_pid.err=0.000;
 	Lidar_pid.err_last=0.000;
 	Lidar_pid.err_sum=0.000;
-	Lidar_pid.Kp=0.45;
+	Lidar_pid.Kp=0.42;
 	Lidar_pid.Ki=0;
-	Lidar_pid.Kd=0.8;
-
+	Lidar_pid.Kd=0.9;
 
 }
 
@@ -146,7 +143,7 @@ uint8_t CarGoAhead_Lidar(float val)
 	l_val = val - val_lidar  ;
 	r_val = val + val_lidar  ;
 	
-	printf("err:	%d	 l_val:  %f    r_val:    %f\r\n",((int)lidar.LefLidar - (int)lidar.RigLidar),l_val,r_val);
+	//printf("err:	%d	 l_val:  %f    r_val:    %f\r\n",((int)lidar.LefLidar - (int)lidar.RigLidar),l_val,r_val);
 
 	Motor_Set_Val(l_val,r_val);
 	
@@ -261,7 +258,6 @@ uint8_t CarTurn(float target_sita,float actual_sita,float max_val,float min_val)
 	if( (val<0) && (val > -min_val) )val=-min_val;
 
 		
-
 	
 	Motor_Set_Val(-val,val);
 	
@@ -365,6 +361,10 @@ float PID_realize_mpu(Pid * pid,float sita)
 	/*********************/
 	pid->actual_sita = sita;//传递真实值
 	pid->err = pid->target_sita - pid->actual_sita;////当前误差=目标值-真实值		
+	
+	//坐标系整合
+	if(pid->err < -180.f) pid->err = (180.f - pid->actual_sita) +  (180.f +  pid->target_sita);
+	if(pid->err > 180.f)  pid->err = (180.f + pid->actual_sita) + (180.f -  pid->target_sita);
 	/*********************/
 	
 	pid->err_sum += pid->err;//误差累计值 = 当前误差累计和
@@ -373,6 +373,8 @@ float PID_realize_mpu(Pid * pid,float sita)
 	//保存上次误差: 这次误差赋值给上次误差
 	pid->err_last = pid->err;
 		
+	
+
 	return pid->output_sita_val;
 }
 

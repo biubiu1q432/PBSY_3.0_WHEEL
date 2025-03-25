@@ -24,7 +24,6 @@ pbsy\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_dma_ex.h
 pbsy\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_cortex.h
 pbsy\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h
 pbsy\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
-pbsy\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_i2c.h
 pbsy\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 pbsy\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 pbsy\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
@@ -43,9 +42,13 @@ pbsy\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h
 pbsy\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h
 pbsy\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h
 pbsy\main.o: ../Core/Inc/dma.h
-pbsy\main.o: ../Core/Inc/i2c.h
 pbsy\main.o: ../Core/Inc/tim.h
 pbsy\main.o: ../Core/Inc/usart.h
 pbsy\main.o: ../Core/Inc/gpio.h
 pbsy\main.o: ../HARDWARE/ATK_MS901M/atk_ms901m.h
 pbsy\main.o: ../HARDWARE/ATK_MS901M/atk_ms901m_uart.h
+pbsy\main.o: ../HARDWARE/vl6180x/vl6180x.h
+pbsy\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+pbsy\main.o: ../HARDWARE/vl6180x/MyI2C.h
+pbsy\main.o: ../HARDWARE/ATK_MW579/atk_mw579_uart.h
+pbsy\main.o: ../HARDWARE/ATK_MW579/atk_mw579.h

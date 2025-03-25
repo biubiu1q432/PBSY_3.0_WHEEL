@@ -20,7 +20,6 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "dma.h"
-#include "i2c.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -29,6 +28,9 @@
 /* USER CODE BEGIN Includes */
 #include "atk_ms901m.h"
 #include "atk_ms901m_uart.h"
+#include "vl6180x.h"
+#include "atk_mw579_uart.h"
+#include "atk_mw579.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,6 +58,10 @@ char ORDER_DATA[ODER_DATA_SIZE];
 
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart2_rx;
+
+extern Lidar lidar;
+
+
 
 #if ISBLUE == 1
 extern uint8_t blue_tmp;
@@ -110,8 +116,6 @@ int main(void)
   MX_UART5_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-  MX_I2C1_Init();
-  MX_I2C2_Init();
   MX_TIM3_Init();
   MX_TIM2_Init();
   MX_TIM8_Init();
@@ -119,9 +123,6 @@ int main(void)
 
 
     HAL_UART_Receive_IT(&huart5,mpu_once_isr_data,MPU_ISR_TRIG);//mpu
-
-
-
     HAL_UARTEx_ReceiveToIdle_DMA(&huart1,CARD_DATA,sizeof(CARD_DATA));//CARD
     __HAL_DMA_DISABLE_IT(&hdma_usart1_rx,DMA_IT_HT);
 
@@ -136,19 +137,6 @@ int main(void)
     HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_4);
 
 
-#if ISBLUE == 1
-	#include "atk_mw579_uart.h"
-	#include "atk_mw579.h"
-	HAL_UART_Receive_IT(&huart4,&blue_tmp,1);
-	BlueInit();
-	//atk_mw579_uart_printf("！！！！！！！！！！！！！\r\n");
-#endif 
-
-
-
-
-
-
 
 
   /* USER CODE END 2 */
@@ -160,7 +148,8 @@ int main(void)
   MX_FREERTOS_Init();
 
   /* Start scheduler */
-  osKernelStart();
+	
+	osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
 
@@ -215,6 +204,14 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+
+void CarInit(void){
+
+
+	
+}
+
 
 /* USER CODE END 4 */
 
