@@ -67,9 +67,9 @@ void PID_init()
 	mpu_pid.err_last=0.000;
 	mpu_pid.err_pre=0.000;
 	mpu_pid.err_sum=0.000;
-	mpu_pid.Kp=0.235;
-	mpu_pid.Ki=0.0011;
-	mpu_pid.Kd=0.10;
+	mpu_pid.Kp=0.225;
+	mpu_pid.Ki=0.00115;
+	mpu_pid.Kd=0.115;
 
 	//lidar
 	Lidar_pid.target_dis=0.000;
@@ -363,9 +363,9 @@ float PID_realize_mpu(Pid * pid,float sita)
 	pid->actual_sita = sita;//传递真实值
 	pid->err = pid->target_sita - pid->actual_sita;////当前误差=目标值-真实值		
 	
-	//坐标系整合
+	//坐标系还原
 	if(pid->err < -180.f) pid->err = (180.f - pid->actual_sita) +  (180.f +  pid->target_sita);
-	if(pid->err > 180.f)  pid->err = (180.f + pid->actual_sita) + (180.f -  pid->target_sita);
+	if(pid->err > 180.f)  pid->err = -((180.f - pid->actual_sita) + (180.f +  pid->target_sita));
 	/*********************/
 	
 	pid->err_sum += pid->err;//误差累计值 = 当前误差累计和

@@ -163,7 +163,7 @@ typedef struct
 
 
 //DEBUG 2or4
-#define UART_PRINT 4
+#define UART_PRINT 2
 #define ISBLUE 0 // 1 or 0
 #define BLE_NAME 			"BLUE_DEBUG"
 #define BLE_HELLO 		"BLUE_DEBUG\r\n"
@@ -195,7 +195,7 @@ typedef struct
 //PID
 #define ALLOW_ERR_DIS 0.3
 #define ALLOW_ERR_SITA 0.3
-#define INTEFRAL_MPU_MAX 4
+#define INTEFRAL_MPU_MAX 3
 #define INTEFRAL_LIDAR_MAX 3
 
 
@@ -204,9 +204,6 @@ typedef struct
 
 //分速度夹角sin
 #define SINANGLE 0.5
-
-
-
 
 /* USER CODE END Private defines */
 

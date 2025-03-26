@@ -241,13 +241,17 @@ void Get_Task(void *argument)
 	char STOP = '!';
 	char ID_ = '@';
  
+	char test_[] = "##################################################################";
     /* Infinite loop */
     for(;;)
     {
         
 		//SEND
 		if(ISDONE){
-			HAL_UART_Transmit_DMA(&huart2,&DONE,sizeof(DONE));
+			
+			HAL_UART_Transmit_DMA(&huart2,test_,sizeof(test_));
+
+			//HAL_UART_Transmit_DMA(&huart2,&DONE,sizeof(DONE));
 			ISDONE = false;
 		}
 		
@@ -260,6 +264,8 @@ void Get_Task(void *argument)
 		
 			ISSTOP = false;
 		}
+		
+		
 		//RECIEVE
 		if(xSemaphoreTake(TASK_FLAGHandle,100) == pdTRUE){
 
@@ -280,7 +286,12 @@ void Get_Task(void *argument)
 			else if (strcmp(task_seg, "2") == 0) {
 				TargetPara.MAX_VAL = value2;
 				TargetPara.SITA = value1 + Car_stat.Car_Alpha;
+				
+				//坐标系整合
 				if(TargetPara.SITA > 180.f)TargetPara.SITA = (TargetPara.SITA - 180.f) - 180.f ;
+				if(TargetPara.SITA < -180.f)TargetPara.SITA = (TargetPara.SITA + 180.f) + 180.f ;
+
+
 				printf("GET ORFER !!!!!!!   TURN VAL : %f  TARGET SITA:  %f\r\n",value2,value1);
 				move_task_stat.TURN_FLAG = true;
 			} 
@@ -330,6 +341,7 @@ void Read_MPU(void *argument)
     {
 		uint8_t	ret = atk_ms901m_get_attitude(&attitude_dat,MPU_MAX_WAIT);        		
 		Car_stat.Car_Alpha = GildeAverageValueFilter_float(attitude_dat.yaw,sita_fliter,FILTER_RANGE);
+		
 		cnt +=1;
 		if(cnt == 5)mpu_isReady = true;
 		vTaskDelay(pdMS_TO_TICKS(30));
@@ -351,13 +363,9 @@ void Read_Lidar(void *argument)
 	uint8_t cnt = 0;
 	
 	VL6180X_Init(1);	
-	
 	vTaskDelay(pdMS_TO_TICKS(10));
-	
 	VL6180X_Init(2);		
-	
 	vTaskDelay(pdMS_TO_TICKS(10));
-	
 	VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
 
 	/* Infinite loop */
@@ -367,14 +375,13 @@ void Read_Lidar(void *argument)
 		
 		lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
 		lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
-		
-		
 		Sliding_Window_Algorithm(Queue_lidar,q_size,&lidar);
-
+		
+		
 		cnt+=1;
 		if(cnt == 5)lidar_isReady = true;
-		
-		vTaskDelay(pdMS_TO_TICKS(30));
+		vTaskDelay(pdMS_TO_TICKS(25));
+
 
     }
   /* USER CODE END Read_Lidar */
@@ -390,12 +397,11 @@ void Read_Lidar(void *argument)
 void Move_Control(void *argument)
 {
   /* USER CODE BEGIN Move_Control */
-    
+	
+	uint8_t ret = 0;
 	PID_init();
 	while(lidar_isReady != true || mpu_isReady != true)vTaskDelay(pdMS_TO_TICKS(50));
 	printf("\r\n ALL_IS_READEY !!!\r\n");
-	
-	
 	/* Infinite loop */
     
 	
@@ -412,32 +418,36 @@ void Move_Control(void *argument)
 
         
 		if(move_task_stat.AHEAD_FLAG) {
-            uint8_t ret = CarGoAhead(TargetPara.ARG_VAL,TargetPara.SITA);
-            if(ret) {
+            ret += CarGoAhead(TargetPara.ARG_VAL,TargetPara.SITA);
+            if(ret>=3) {
                 move_task_stat.AHEAD_FLAG = false;
 				Car_Dis_ReFresh();//距离重置
 				ISDONE = true;
+				ret = 0;
             }
         }
 
         else if(move_task_stat.TURN_FLAG) {
-            uint8_t ret = CarTurn(TargetPara.SITA,Car_stat.Car_Alpha,TargetPara.MAX_VAL,0.5);
-            if(ret) {
+            ret += CarTurn(TargetPara.SITA,Car_stat.Car_Alpha,TargetPara.MAX_VAL,0.5);
+            if(ret>=3) {
                 move_task_stat.TURN_FLAG = false;
                 Car_Alpha_ReFresh(TargetPara.SITA);//角度更新
 				Car_Dis_ReFresh();
 				ISDONE = true;
+				ret = 0;
+
 
             }
 
         }
 
         else if(move_task_stat.DIS_FLAG) {
-			uint8_t ret =CarSetDis(TargetPara.DIS,TargetPara.MAX_VAL);
-            if(ret) {
+			ret +=CarSetDis(TargetPara.DIS,TargetPara.MAX_VAL);
+            if(ret>=3) {
                 move_task_stat.DIS_FLAG = false;
 				Car_Dis_ReFresh();//距离重置
 				ISDONE = true;
+				ret = 0;
             }
 
         }
