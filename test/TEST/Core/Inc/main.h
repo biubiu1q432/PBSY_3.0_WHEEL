@@ -55,8 +55,8 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
-/* USER CODE END EFP */
+void delay_us(uint32_t nus);
+	/* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
 #define LED_Pin GPIO_PIN_4

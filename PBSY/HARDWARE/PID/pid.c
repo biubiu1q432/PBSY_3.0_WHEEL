@@ -78,9 +78,9 @@ void PID_init()
 	Lidar_pid.err=0.000;
 	Lidar_pid.err_last=0.000;
 	Lidar_pid.err_sum=0.000;
-	Lidar_pid.Kp=0.42;
-	Lidar_pid.Ki=0;
-	Lidar_pid.Kd=0.9;
+	Lidar_pid.Kp=0.1;
+	Lidar_pid.Ki=0.0001;
+	Lidar_pid.Kd=0.1;
 
 }
 
@@ -90,7 +90,7 @@ void PID_init()
 @para	 恒定速度： float val
 @return 
 **************************************************************************/
-uint8_t CarGoAhead(float val)
+uint8_t CarGoAhead(float val,float target_sita)
 {
 	float val_mpu;
 	float val_lidar;
@@ -104,7 +104,7 @@ uint8_t CarGoAhead(float val)
 //	}
 	
 	//角度环--》维持当前角度
-	mpu_pid.target_sita = 0;
+	mpu_pid.target_sita =target_sita;
 	val_mpu=PID_realize_mpu(&mpu_pid,Car_stat.Car_Alpha);
 	
 	//激光环--》维持当前角度
@@ -158,7 +158,7 @@ uint8_t CarGoAhead_Lidar(float val)
 @para	 恒定速度： float val
 @return 
 **************************************************************************/
-uint8_t CarGoAhead_MPU(float val)
+uint8_t CarGoAhead_MPU(float val,float target_sita)
 {
 	float val_mpu;
 	float l_val;
@@ -167,13 +167,14 @@ uint8_t CarGoAhead_MPU(float val)
 	//over--》激光突变
 	
 	//角度环--》维持当前角度
-	mpu_pid.target_sita = 0;
+	mpu_pid.target_sita = target_sita;
 	val_mpu=PID_realize_mpu(&mpu_pid,Car_stat.Car_Alpha);
 	
 	l_val = val - val_mpu  ;
 	r_val = val + val_mpu  ;
 	
 	//printf("l_val:		%f   r_val:		%f   sita:		%f\r\n",l_val,r_val,Car_stat.Car_Alpha);
+	
 	Motor_Set_Val(l_val,r_val);
 
 	return 0;
@@ -368,11 +369,21 @@ float PID_realize_mpu(Pid * pid,float sita)
 	/*********************/
 	
 	pid->err_sum += pid->err;//误差累计值 = 当前误差累计和
+	
+	float i_integral  = pid->Ki*pid->err_sum;//积分
+	
+	//积分限幅
+	if(i_integral > INTEFRAL_MPU_MAX) i_integral = INTEFRAL_MPU_MAX;
+	if(i_integral < -INTEFRAL_MPU_MAX) i_integral = -INTEFRAL_MPU_MAX;
+
+	
 	//使用PID控制 输出 = Kp*当前误差  +  Ki*误差累计值 + Kd*(当前误差-上次误差)
-	pid->output_sita_val = pid->Kp*pid->err + pid->Ki*pid->err_sum + pid->Kd*(pid->err - pid->err_last);	
+	pid->output_sita_val = pid->Kp*pid->err + i_integral + pid->Kd*(pid->err - pid->err_last);	
+	
+		
 	//保存上次误差: 这次误差赋值给上次误差
 	pid->err_last = pid->err;
-		
+	
 	
 
 	return pid->output_sita_val;
@@ -386,8 +397,15 @@ float PID_realize_lidar(Pid * pid)
 	/*********************/
 	
 	pid->err_sum += pid->lidar_err;//误差累计值 = 当前误差累计和
+	
+	float i_integral = pid->Ki*pid->err_sum;
+	//积分限幅
+	if(i_integral > INTEFRAL_LIDAR_MAX) i_integral = INTEFRAL_LIDAR_MAX;
+	if(i_integral < -INTEFRAL_LIDAR_MAX) i_integral = -INTEFRAL_LIDAR_MAX;
+	
+	
 	//使用PID控制 输出 = Kp*当前误差  +  Ki*误差累计值 + Kd*(当前误差-上次误差)
-	pid->output_val = pid->Kp*pid->lidar_err + pid->Ki*pid->err_sum + pid->Kd*(pid->lidar_err - pid->err_last);	
+	pid->output_val = pid->Kp*pid->lidar_err + i_integral + pid->Kd*(pid->lidar_err - pid->err_last);	
 	//保存上次误差: 这次误差赋值给上次误差
 	pid->err_last = pid->lidar_err;
 

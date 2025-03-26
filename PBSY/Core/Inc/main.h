@@ -140,8 +140,8 @@ typedef struct
 	bool DIS_FLAG;
 
 } MOVE_TASK_STAT;
-#define MPU_WEIGHT_FOR_VAL 0.85
-#define LIDAR_WEIGHT_FOR_VAL 0.15
+#define MPU_WEIGHT_FOR_VAL 0.6
+#define LIDAR_WEIGHT_FOR_VAL 0.4
 
 
 //Lidar
@@ -154,17 +154,17 @@ typedef struct
 	uint8_t RigLidar;
 
 } Lidar;
-#define CAILBRATION_DIS 45
-#define CAILBRATION_REPIT 10
-#define LIDAR_MAX_WAIT 5
-
+#define CAILBRATION_DIS 		45
+#define CAILBRATION_REPIT 	5
+#define LIDAR_MAX_WAIT		10
+#define I2C_DELAY 7
 
 //软硬I2C 	1：硬 2：软
-#define I2CHARDWARE 2
+#define I2CHARDWARE 1
 
 
 //DEBUG 2or4
-#define UART_PRINT 2
+#define UART_PRINT 4
 #define ISBLUE 0 // 1 or 0
 #define BLE_NAME 			"BLUE_DEBUG"
 #define BLE_HELLO 		"BLUE_DEBUG\r\n"
@@ -177,7 +177,7 @@ typedef struct
 
 //EC
 #define EC_ARR	65535		
-#define ENCODER_TIME 0.040
+#define ENCODER_TIME 0.04
 #define LEFT_EC_1	1400			
 #define RIGHT_EC_1	1400				
 #define PI		3.1415926			
@@ -196,6 +196,8 @@ typedef struct
 //PID
 #define ALLOW_ERR_DIS 0.3
 #define ALLOW_ERR_SITA 0.3
+#define INTEFRAL_MPU_MAX 4
+#define INTEFRAL_LIDAR_MAX 3
 
 
 //Radius

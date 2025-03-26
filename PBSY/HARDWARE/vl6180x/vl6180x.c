@@ -1,9 +1,13 @@
 #include "vl6180x.h"
 
+
+
 #if I2CHARDWARE == 1
 extern I2C_HandleTypeDef hi2c2;
 extern I2C_HandleTypeDef hi2c1;
 #endif
+
+
 
 /*
 @breif  距离标定
@@ -14,13 +18,18 @@ void VL6180X_Range_Cailbration(Lidar *lidar,int Cailbration_dis,uint8_t repit){
 	int sum=0;
 	int dis=0;
 	
-	for(int i = 1;i<=repit;i++) sum += VL6180X_Read_Range(1);
+	for(int i = 1;i<=repit;i++){
+		sum += VL6180X_Read_Range(1);
+	} 
+	
 	dis = sum/repit;
 	lidar->Lef_Cali = dis - Cailbration_dis;
 		
 	sum= 0;
 	
-	for(int i = 1;i<=repit;i++) sum += VL6180X_Read_Range(2);
+	for(int i = 1;i<=repit;i++){
+		sum += VL6180X_Read_Range(2);
+	} 
 	dis = sum/repit;
 	lidar->Rig_Cali = dis - Cailbration_dis;
 
@@ -112,7 +121,6 @@ uint8_t VL6180X_Read_Range(uint8_t Turn)
 	while(!(VL6180X_ReadReg(VL6180X_REG_RESULT_INTERRUPT_STATUS_GPIO,Turn) & 0x04));
 	range = VL6180X_ReadReg(VL6180X_REG_RESULT_RANGE_VAL,Turn);
 	VL6180X_WriteReg(VL6180X_REG_SYSTEM_INTERRUPT_CLEAR,0x07,Turn);
-
 	return range;
 }
 

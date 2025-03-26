@@ -33,6 +33,7 @@ pbsy\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_dma_ex.h
 pbsy\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_cortex.h
 pbsy\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h
 pbsy\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
+pbsy\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_i2c.h
 pbsy\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 pbsy\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 pbsy\freertos.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
@@ -48,6 +49,7 @@ pbsy\freertos.o: ../HARDWARE/math/math.h
 pbsy\freertos.o: ../HARDWARE/vl6180x/vl6180x.h
 pbsy\freertos.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 pbsy\freertos.o: ../HARDWARE/vl6180x/MyI2C.h
+pbsy\freertos.o: ../Core/Inc/i2c.h
 pbsy\freertos.o: ../Core/Inc/tim.h
 pbsy\freertos.o: ../HARDWARE/motor/motor.h
 pbsy\freertos.o: ../Core/Inc/dma.h

@@ -25,6 +25,7 @@ pbsy\vl6180x.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_dma_ex.h
 pbsy\vl6180x.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_cortex.h
 pbsy\vl6180x.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h
 pbsy\vl6180x.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
+pbsy\vl6180x.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_i2c.h
 pbsy\vl6180x.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 pbsy\vl6180x.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 pbsy\vl6180x.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
@@ -33,3 +34,4 @@ pbsy\vl6180x.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 pbsy\vl6180x.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
 pbsy\vl6180x.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 pbsy\vl6180x.o: ..\HARDWARE\vl6180x\MyI2C.h
+pbsy\vl6180x.o: ../Core/Inc/i2c.h

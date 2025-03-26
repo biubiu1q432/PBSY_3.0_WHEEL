@@ -96,22 +96,8 @@ int main(void)
   MX_GPIO_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
-	HAL_UART_Receive_IT(&huart4, &tmp, 1); 
-	
-	atk_mw579_init(ATK_MW579_UART_BAUDRATE_115200);
-	atk_mw579_enter_config_mode();
-	ret  = atk_mw579_set_name(DEMO_BLE_NAME);								//设置ATK-MW579蓝牙名称
-	ret += atk_mw579_set_hello(DEMO_BLE_HELLO);							//设置ATK-MW579开机欢迎语
-	ret += atk_mw579_set_tpl(ATK_MW579_TPL_P0DBM);					//设置ATK-MW579发射功率
-	ret += atk_mw579_set_uart(ATK_MW579_UART_BAUDRATE_115200, ATK_MW579_UART_DATA_8, ATK_MW579_UART_PARI_NONE, ATK_MW579_UART_STOP_1);//设置ATK-MW579串口参数
-	ret += atk_mw579_set_adptim(DEMO_BLE_ADPTIM);						//设置ATK-MW579广播速度
-	ret += atk_mw579_set_linkpassen(ATK_MW579_LINKPASSEN_OFF);//设置ATK-MW579链路匹配
-	ret += atk_mw579_set_leden(ATK_MW579_LEDEN_ON);					//设置ATK-MW579板载LED
-	ret += atk_mw579_set_slavesleepen(ATK_MW579_SLAVESLEEPEN_OFF);//设置ATK-MW579从设备断连睡眠
-	ret += atk_mw579_set_maxput(ATK_MW579_MAXPUT_OFF);			//设置ATK-MW579通信最大输出
-	ret += atk_mw579_set_mode(ATK_MW579_MODE_S);						//设置ATK-MW579工作模式
-	
-	atk_mw579_uart_rx_restart(); /* 重新开始接收数据 */
+
+
 
 	
 
@@ -126,9 +112,10 @@ int main(void)
 	  
 	  
     /* USER CODE BEGIN 3 */
-		atk_mw579_uart_printf("rightee\r\n");
-	  HAL_Delay(100);
 
+	HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+	 
+	  delay_us(1000000);
   }
   /* USER CODE END 3 */
 }
@@ -173,6 +160,54 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+* @brief 延时 nus
+* * @note 无论是否使用 OS, 都是用时钟摘取法来做 us 延时
+* @param nus: 要延时的 us 数
+* @note nus 取值范围: 0 ~ (2^32 / fac_us) (fac_us 一般等于系统主频, 自行套入计算)
+* @retval 无
+*/
+void delay_us(uint32_t nus)
+{
+ uint32_t ticks;
+ uint32_t told, tnow, tcnt = 0;
+ uint32_t reload = SysTick->LOAD; /* LOAD 的值 */
+ ticks = nus * 72; /* 需要的节拍数 */
+ 
+#if SYS_SUPPORT_OS /* 如果需要支持 OS */
+ delay_osschedlock(); /* 锁定 OS 的任务调度器 */
+#endif
+ told = SysTick->VAL; /* 刚进入时的计数器值 */
+ while (1)
+ {
+ tnow = SysTick->VAL;
+ if (tnow != told)
+ {
+ if (tnow < told)
+ {
+ tcnt += told - tnow; 
+/* 这里注意一下 SYSTICK 是一个递减的计数器就可以了 */
+ }
+ else
+ {
+ tcnt += reload - tnow + told;
+ }
+ told = tnow;
+ if (tcnt >= ticks)
+ {
+ break; /* 时间超过/等于要延迟的时间,则退出 */
+ }
+ }
+ }
+#if SYS_SUPPORT_OS /* 如果需要支持 OS */
+ delay_osschedunlock(); /* 恢复 OS 的任务调度器 */
+#endif 
+}
+
+
+
+
 
 /* USER CODE END 4 */
 

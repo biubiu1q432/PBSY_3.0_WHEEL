@@ -89,11 +89,11 @@ void fliter_mpu_init(float* sita_fliter){
 /*ÖØÖÃ×ø±êÏµ*/
 float atk_ms901m_sita_init(int repit){
 	float sita_init = 0;
-	float sita_arr[10]; 
+	float sita_arr[5]; 
 	for(int i =0;i<repit;i++){
 			atk_ms901m_get_attitude(&attitude_dat,MPU_MAX_WAIT);	
 			float tmp_sita = attitude_dat.yaw;
-			sita_init = GildeAverageValueFilter_float(tmp_sita,sita_arr,10);
+			sita_init = GildeAverageValueFilter_float(tmp_sita,sita_arr,5);
 		}	
 	
 	return sita_init;

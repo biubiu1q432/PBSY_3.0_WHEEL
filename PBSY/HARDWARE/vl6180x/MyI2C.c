@@ -3,18 +3,20 @@
 #include "MyI2C.h"
 
 /*================================================*/
+
+
 void MyI2C_W_SCL(uint8_t BitValue,uint8_t Turn)
 {
     if(Turn == 1)			HAL_GPIO_WritePin(L_SCL_GPIO_Port,L_SCL_Pin,(GPIO_PinState)BitValue);
 	else if(Turn == 2) 	HAL_GPIO_WritePin(R_SCL_GPIO_Port,R_SCL_Pin,(GPIO_PinState)BitValue);
-    Delayus(3);
+    Delayus(I2C_DELAY);
 }
 
 void MyI2C_W_SDA(uint8_t BitValue,uint8_t Turn)
 {
     if(Turn == 1)			HAL_GPIO_WritePin(L_SDA_GPIO_Port,L_SDA_Pin,(GPIO_PinState)BitValue);
 	else if(Turn == 2) 	HAL_GPIO_WritePin(R_SDA_GPIO_Port,R_SDA_Pin,(GPIO_PinState)BitValue);   
-	Delayus(3);
+	Delayus(I2C_DELAY);
 }
 
 uint8_t MyI2C_R_SDA(uint8_t Turn)
@@ -23,12 +25,11 @@ uint8_t MyI2C_R_SDA(uint8_t Turn)
     
 	if(Turn == 1)			BitValue = (uint8_t)HAL_GPIO_ReadPin(L_SDA_GPIO_Port,L_SDA_Pin);
 	else if(Turn == 2) 	BitValue = (uint8_t)HAL_GPIO_ReadPin(R_SDA_GPIO_Port,R_SDA_Pin);
-    Delayus(3);
-    return BitValue;
+    Delayus(I2C_DELAY);
+    
+	return BitValue;
 }
-
 /*================================================*/
-
 
 void Delayus(uint32_t usdelay)
 {

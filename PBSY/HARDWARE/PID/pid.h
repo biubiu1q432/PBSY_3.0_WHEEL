@@ -48,8 +48,8 @@ uint8_t Motor_Set_Dis(float target_dis,float range_val);
 uint8_t CarSetDis(float target_dis,float range_val);
 
 //×ßÖ±Ïß
-uint8_t CarGoAhead(float val);
-uint8_t CarGoAhead_MPU(float val);
+uint8_t CarGoAhead(float val,float target_sita);
+uint8_t CarGoAhead_MPU(float val,float target_sita);
 uint8_t CarGoAhead_Lidar(float val);
 
 
