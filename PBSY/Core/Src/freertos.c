@@ -314,27 +314,26 @@ void Get_Task(void *argument)
 /* USER CODE END Header_Read_MPU */
 void Read_MPU(void *argument)
 {
-  /* USER CODE BEGIN Read_MPU */
+  
+	/* USER CODE BEGIN Read_MPU */
 	
 	uint8_t cnt = 0;
 	uint8_t ret = atk_ms901m_init();
     float sita_init = atk_ms901m_sita_init(10);
 	float sita_fliter[FILTER_RANGE] = {sita_init,sita_init,sita_init,sita_init,sita_init};
-	
 	//==========DEBUG:给pid调试一个单独参数================//
 	TargetPara.SITA = sita_init;
 	//==========DEBUG:给pid调试一个单独参数================//
-
+	
 	/* Infinite loop */
     for(;;)
     {
 		uint8_t	ret = atk_ms901m_get_attitude(&attitude_dat,MPU_MAX_WAIT);        		
 		Car_stat.Car_Alpha = GildeAverageValueFilter_float(attitude_dat.yaw,sita_fliter,FILTER_RANGE);
-		
 		cnt +=1;
 		if(cnt == 5)mpu_isReady = true;
 		vTaskDelay(pdMS_TO_TICKS(30));
-    }
+	}
   /* USER CODE END Read_MPU */
 }
 
@@ -348,27 +347,34 @@ void Read_MPU(void *argument)
 void Read_Lidar(void *argument)
 {
   /* USER CODE BEGIN Read_Lidar */
-	uint8_t cnt = 0;
-	VL6180X_Init(1);	
-	VL6180X_Init(2);		
-	VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
 	
+	uint8_t cnt = 0;
+	
+	VL6180X_Init(1);	
+	
+	vTaskDelay(pdMS_TO_TICKS(10));
+	
+	VL6180X_Init(2);		
+	
+	vTaskDelay(pdMS_TO_TICKS(10));
+	
+	VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
+
 	/* Infinite loop */
     for(;;)
     {
-
 		HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
-		
 		
 		lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
 		lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
-
+		
+		
 		Sliding_Window_Algorithm(Queue_lidar,q_size,&lidar);
 
 		cnt+=1;
-		if(cnt == 5)	lidar_isReady = true;
+		if(cnt == 5)lidar_isReady = true;
 		
-			vTaskDelay(pdMS_TO_TICKS(30));
+		vTaskDelay(pdMS_TO_TICKS(30));
 
     }
   /* USER CODE END Read_Lidar */

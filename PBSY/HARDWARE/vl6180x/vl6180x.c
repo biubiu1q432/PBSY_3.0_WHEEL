@@ -1,7 +1,6 @@
 #include "vl6180x.h"
 
 
-
 #if I2CHARDWARE == 1
 extern I2C_HandleTypeDef hi2c2;
 extern I2C_HandleTypeDef hi2c1;
@@ -21,12 +20,9 @@ void VL6180X_Range_Cailbration(Lidar *lidar,int Cailbration_dis,uint8_t repit){
 	for(int i = 1;i<=repit;i++){
 		sum += VL6180X_Read_Range(1);
 	} 
-	
 	dis = sum/repit;
-	lidar->Lef_Cali = dis - Cailbration_dis;
-		
+	lidar->Lef_Cali = dis - Cailbration_dis;	
 	sum= 0;
-	
 	for(int i = 1;i<=repit;i++){
 		sum += VL6180X_Read_Range(2);
 	} 
@@ -34,9 +30,6 @@ void VL6180X_Range_Cailbration(Lidar *lidar,int Cailbration_dis,uint8_t repit){
 	lidar->Rig_Cali = dis - Cailbration_dis;
 
 }
-
-
-
 
 uint8_t VL6180X_Init(uint8_t Turn)
 {
@@ -97,6 +90,7 @@ uint8_t VL6180X_Init(uint8_t Turn)
 		VL6180X_WriteReg(0x0014, 0x24,Turn);       // Configures interrupt on 'New Sample
 									// Ready threshold event'
 		return 0;
+
 	}
 	else return 1;
 }

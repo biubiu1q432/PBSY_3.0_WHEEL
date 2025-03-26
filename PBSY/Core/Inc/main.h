@@ -156,11 +156,10 @@ typedef struct
 } Lidar;
 #define CAILBRATION_DIS 		45
 #define CAILBRATION_REPIT 	5
-#define LIDAR_MAX_WAIT		10
-#define I2C_DELAY 7
-
+#define LIDAR_MAX_WAIT		6
+#define I2C_DELAY 5
 //软硬I2C 	1：硬 2：软
-#define I2CHARDWARE 1
+#define I2CHARDWARE 2
 
 
 //DEBUG 2or4
