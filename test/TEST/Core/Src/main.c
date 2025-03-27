@@ -115,7 +115,7 @@ int main(void)
 
 	HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 	 
-	  delay_us(1000000);
+	Delay_us(1000000);
   }
   /* USER CODE END 3 */
 }
@@ -161,50 +161,15 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
-/**
-* @brief 延时 nus
-* * @note 无论是否使用 OS, 都是用时钟摘取法来做 us 延时
-* @param nus: 要延时的 us 数
-* @note nus 取值范围: 0 ~ (2^32 / fac_us) (fac_us 一般等于系统主频, 自行套入计算)
-* @retval 无
-*/
-void delay_us(uint32_t nus)
+void Delay_us(uint32_t usdelay)
 {
- uint32_t ticks;
- uint32_t told, tnow, tcnt = 0;
- uint32_t reload = SysTick->LOAD; /* LOAD 的值 */
- ticks = nus * 72; /* 需要的节拍数 */
- 
-#if SYS_SUPPORT_OS /* 如果需要支持 OS */
- delay_osschedlock(); /* 锁定 OS 的任务调度器 */
-#endif
- told = SysTick->VAL; /* 刚进入时的计数器值 */
- while (1)
- {
- tnow = SysTick->VAL;
- if (tnow != told)
- {
- if (tnow < told)
- {
- tcnt += told - tnow; 
-/* 这里注意一下 SYSTICK 是一个递减的计数器就可以了 */
- }
- else
- {
- tcnt += reload - tnow + told;
- }
- told = tnow;
- if (tcnt >= ticks)
- {
- break; /* 时间超过/等于要延迟的时间,则退出 */
- }
- }
- }
-#if SYS_SUPPORT_OS /* 如果需要支持 OS */
- delay_osschedunlock(); /* 恢复 OS 的任务调度器 */
-#endif 
+    __IO uint32_t Delay = usdelay * (SystemCoreClock/6U/1000U/1000);
+    do
+    {
+        __NOP();
+    }
+    while (Delay --);
 }
-
 
 
 

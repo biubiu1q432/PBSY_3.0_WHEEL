@@ -81,9 +81,6 @@ extern atk_ms901m_attitude_data_t attitude_dat;
 
 //TARGET PARA
 TARGET_PARA TargetPara;
-bool ISDONE = false;
-bool ISID = false;
-bool ISSTOP = false;
 
 
 //Lidar
@@ -98,6 +95,8 @@ extern Motor_Stat RIG_MOTOR;
 //CAR_STAT
 CAR_STAT Car_stat;
 MOVE_TASK_STAT move_task_stat;
+TASK_STAT TaskStat;
+
 
 //CARD
 extern uint8_t CARD_DATA[CARD_DATA_SIZE];
@@ -241,28 +240,29 @@ void Get_Task(void *argument)
 	char STOP = '!';
 	char ID_ = '@';
  
-	char test_[] = "##################################################################";
+	char test_[] = "##################################################################\r\n";
     /* Infinite loop */
     for(;;)
     {
         
 		//SEND
-		if(ISDONE){
-			
+		if(TaskStat.ISDONE){
 			HAL_UART_Transmit_DMA(&huart2,test_,sizeof(test_));
-
-			//HAL_UART_Transmit_DMA(&huart2,&DONE,sizeof(DONE));
-			ISDONE = false;
+			TaskStat.ISDONE = false;
 		}
 		
-		if(ISID){
+		if(xSemaphoreTake(CARD_FLAGHandle,100)==pdTRUE){
+			//=========封装ID=======//
 			
-			ISID= false;
+			//=========封装ID=======//
+			TaskStat.ISID= false;
 		}
 		
-		if(ISSTOP){
+		if(TaskStat.ISSTOP){
 		
-			ISSTOP = false;
+			HAL_UART_Transmit_DMA(&huart2,test_,sizeof(test_));
+			TaskStat.ISSTOP = false;
+			
 		}
 		
 		
@@ -303,6 +303,12 @@ void Get_Task(void *argument)
 				TargetPara.MAX_VAL = value2;
 				
 				move_task_stat.DIS_FLAG = true;
+			}
+			
+			// STop
+			else if (strcmp(task_seg, "4") == 0) {				
+				move_task_stat.STOP_FLAG = true;
+				printf("GET_ORDER_STOP\r\n");
 			}
 
 
@@ -362,20 +368,19 @@ void Read_Lidar(void *argument)
 	
 	uint8_t cnt = 0;
 	
-	VL6180X_Init(1);	
-	vTaskDelay(pdMS_TO_TICKS(10));
-	VL6180X_Init(2);		
-	vTaskDelay(pdMS_TO_TICKS(10));
-	VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
+//	VL6180X_Init(1);	
+//	vTaskDelay(pdMS_TO_TICKS(10));
+//	VL6180X_Init(2);		
+//	vTaskDelay(pdMS_TO_TICKS(10));
+//	VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
 
 	/* Infinite loop */
     for(;;)
     {
-		HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 		
-		lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
-		lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
-		Sliding_Window_Algorithm(Queue_lidar,q_size,&lidar);
+//		lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
+//		lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
+//		Sliding_Window_Algorithm(Queue_lidar,q_size,&lidar);
 		
 		
 		cnt+=1;
@@ -400,8 +405,13 @@ void Move_Control(void *argument)
 	
 	uint8_t ret = 0;
 	PID_init();
+	Car_Move_Stat_Refresh();
+	Car_Dis_ReFresh();
+
+	
 	while(lidar_isReady != true || mpu_isReady != true)vTaskDelay(pdMS_TO_TICKS(50));
-	printf("\r\n ALL_IS_READEY !!!\r\n");
+	
+	printf("\n ALL_IS_READEY !!!\r\n");
 	/* Infinite loop */
     
 	
@@ -409,6 +419,9 @@ void Move_Control(void *argument)
     {
 		
 		CarStat_Get();	
+		HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+
+		
 		CarStatParmPrint();
 		
 		
@@ -417,46 +430,64 @@ void Move_Control(void *argument)
 		//CarGoAhead(45,TargetPara.SITA);
 
         
-		if(move_task_stat.AHEAD_FLAG) {
+		
+		/*内部调用*/
+		if(move_task_stat.STOP_FLAG) {
+			printf("RUN_STOP_ORDER\r\n");
+			Car_Move_Stat_Refresh();
+			Car_Dis_ReFresh();
+			ret  += CarStop();
+			if(ret >= 3){
+				Motor_Set(0,0);
+				printf("STOP OVER!\r\n");
+				TaskStat.ISDONE = true;
+				move_task_stat.STOP_FLAG = false;
+				Car_Dis_ReFresh();
+				ret = 0;
+			} 
+
+        }
+		
+		
+		
+		else if(move_task_stat.AHEAD_FLAG) {
             ret += CarGoAhead(TargetPara.ARG_VAL,TargetPara.SITA);
             if(ret>=3) {
                 move_task_stat.AHEAD_FLAG = false;
 				Car_Dis_ReFresh();//距离重置
-				ISDONE = true;
+				TaskStat.ISDONE = true;
 				ret = 0;
             }
         }
 
         else if(move_task_stat.TURN_FLAG) {
             ret += CarTurn(TargetPara.SITA,Car_stat.Car_Alpha,TargetPara.MAX_VAL,0.5);
-            if(ret>=3) {
-                move_task_stat.TURN_FLAG = false;
-                Car_Alpha_ReFresh(TargetPara.SITA);//角度更新
+			printf("RUN_TURN\r\n");
+
+			if(ret>=3) {
+				printf("TURN OVER \r\n");
+
+				move_task_stat.TURN_FLAG = false;
+                Car_Alpha_ReFresh(TargetPara.SITA);
 				Car_Dis_ReFresh();
-				ISDONE = true;
+				TaskStat.ISDONE = true;
 				ret = 0;
-
-
             }
 
         }
 
         else if(move_task_stat.DIS_FLAG) {
-			ret +=CarSetDis(TargetPara.DIS,TargetPara.MAX_VAL);
+			ret +=CarSetDis(TargetPara.DIS,TargetPara.MAX_VAL,Car_stat.Car_Alpha);
             if(ret>=3) {
                 move_task_stat.DIS_FLAG = false;
-				Car_Dis_ReFresh();//距离重置
-				ISDONE = true;
+				Car_Dis_ReFresh();
+				TaskStat.ISDONE = true;
 				ret = 0;
             }
 
         }
 
-        else if(move_task_stat.STOP_FLAG) {
-            Motor_Set_Val(0,0);
-			Car_Dis_ReFresh();//距离重置
-			ISDONE = true;
-        }
+
 
         vTaskDelay(pdMS_TO_TICKS(40));
 
@@ -508,6 +539,7 @@ void CarStatParmPrint(void) {
 		
 	//printf("L:%f  R:%f\r\n",lidar.LefLidar,lidar.RigLidar);
 
+	//printf("stop_flag : %d  turn_flag : %d  isDone : %d\r\n",move_task_stat.STOP_FLAG,move_task_stat.TURN_FLAG,TaskStat.ISDONE);
 }
 
 
@@ -515,12 +547,7 @@ void CarStatParmPrint(void) {
 /*FIND_COLOR_STOP_ISR*/
 BaseType_t xHigherPriorityTaskWoken_stop = pdFALSE;
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-
-    if(GPIO_Pin == R_FC_Pin || GPIO_Pin==L_FC_Pin) {
-			ISSTOP = true;
-        }
-
-    
+    if(GPIO_Pin == R_FC_Pin || GPIO_Pin==L_FC_Pin) move_task_stat.STOP_FLAG = true;     
 }
 
 
@@ -582,7 +609,6 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 		}
 	
 	}
-
 #endif
 }
 

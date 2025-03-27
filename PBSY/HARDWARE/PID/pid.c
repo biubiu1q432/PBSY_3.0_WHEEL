@@ -186,7 +186,7 @@ uint8_t CarGoAhead_MPU(float val,float target_sita)
 @para	：目标距离target_dis，限速（恒正）range_val
 @return :  void
 **************************************************************************/
-uint8_t CarSetDis(float target_dis,float range_val)
+uint8_t CarSetDis(float target_dis,float range_val,float target_sita)
 {
 
 	local_pid.target_dis  = target_dis;
@@ -208,7 +208,7 @@ uint8_t CarSetDis(float target_dis,float range_val)
 	//位置环
 	float val = PID_realize_dis(&local_pid,acual_dis);
 	//角度环
-	mpu_pid.target_sita = 0;
+	mpu_pid.target_sita = target_sita;
 	float val_mpu  = PID_realize_mpu(&mpu_pid,Car_stat.Car_Alpha);
 	
 	
@@ -265,6 +265,21 @@ uint8_t CarTurn(float target_sita,float actual_sita,float max_val,float min_val)
 	return 0;
 
 }
+
+/**************************************************************************
+@bref   ：STOP
+@para	：
+@return :  void
+**************************************************************************/
+uint8_t CarStop(void){
+	Motor_Set_Val(0,0);
+	if(LEFT_MOTOR.Motorspeed == 0 && LEFT_MOTOR.Motorspeed == 0)return 1;
+	return 0;
+}
+
+
+
+
 
 /**************************************************************************
 @bref: 位置环 :dis --> val

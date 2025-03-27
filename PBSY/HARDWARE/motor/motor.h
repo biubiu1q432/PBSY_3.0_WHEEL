@@ -31,6 +31,7 @@ void CarStat_Get(void);
 //car
 void Car_Dis_ReFresh(void);
 void Car_Alpha_ReFresh(float last_order_alpha);
+void Car_Move_Stat_Refresh(void);
 #endif
 
 

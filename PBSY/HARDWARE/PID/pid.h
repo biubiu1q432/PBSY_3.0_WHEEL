@@ -45,12 +45,13 @@ void Motor_Set_Val(float left_val,float right_val);
 
 //走指定距离
 uint8_t Motor_Set_Dis(float target_dis,float range_val);
-uint8_t CarSetDis(float target_dis,float range_val);
-
+uint8_t CarSetDis(float target_dis,float range_val,float target_sita);
 //走直线
 uint8_t CarGoAhead(float val,float target_sita);
 uint8_t CarGoAhead_MPU(float val,float target_sita);
 uint8_t CarGoAhead_Lidar(float val);
+
+uint8_t CarStop(void);
 
 
 //转向

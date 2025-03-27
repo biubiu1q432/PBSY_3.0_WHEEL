@@ -1,6 +1,9 @@
 #include "motor.h"
 
 extern CAR_STAT Car_stat;
+extern MOVE_TASK_STAT move_task_stat;
+
+
 
 Motor_Stat LEFT_MOTOR;
 Motor_Stat RIG_MOTOR;
@@ -104,6 +107,14 @@ void Car_Dis_ReFresh(void)
 void Car_Alpha_ReFresh(float last_order_alpha)
 {
 	Car_stat.Car_LastAlpha += last_order_alpha;
+}
+
+
+void Car_Move_Stat_Refresh(void){
+
+	move_task_stat.AHEAD_FLAG = false;
+	move_task_stat.DIS_FLAG = false;
+	move_task_stat.TURN_FLAG = false;
 }
 
 

@@ -144,6 +144,16 @@ typedef struct
 #define LIDAR_WEIGHT_FOR_VAL 0.4
 
 
+typedef struct{
+
+	bool ISDONE ;
+	bool ISID ;
+	bool ISSTOP;
+}TASK_STAT;
+
+
+
+
 //Lidar
 typedef struct
 {
@@ -157,7 +167,7 @@ typedef struct
 #define CAILBRATION_DIS 		45
 #define CAILBRATION_REPIT 	5
 #define LIDAR_MAX_WAIT		6
-#define I2C_DELAY 5
+#define I2C_DELAY 4
 //软硬I2C 	1：硬 2：软
 #define I2CHARDWARE 2
 
