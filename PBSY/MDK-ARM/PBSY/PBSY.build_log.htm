@@ -22,15 +22,15 @@ Dialog DLL:      TCM.DLL V1.32.0.0
  
 <h2>Project:</h2>
 C:\Users\86135\Desktop\PBSY\PBSY\MDK-ARM\PBSY.uvprojx
-Project File Date:  03/26/2025
+Project File Date:  04/17/2025
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 5 (build 528)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'PBSY'
 compiling freertos.c...
-../Core/Src/freertos.c(250): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "const uint8_t *"
+../Core/Src/freertos.c(251): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "const uint8_t *"
   			HAL_UART_Transmit_DMA(&huart2,test_,sizeof(test_));
-../Core/Src/freertos.c(263): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "const uint8_t *"
+../Core/Src/freertos.c(265): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "const uint8_t *"
   			HAL_UART_Transmit_DMA(&huart2,test_,sizeof(test_));
 ../Core/Src/freertos.c(239): warning:  #177-D: variable "DONE"  was declared but never referenced
   	char DONE = '#';
@@ -38,11 +38,11 @@ compiling freertos.c...
   	char STOP = '!';
 ../Core/Src/freertos.c(241): warning:  #177-D: variable "ID_"  was declared but never referenced
   	char ID_ = '@';
-../Core/Src/freertos.c(582): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "uint8_t *"
+../Core/Src/freertos.c(601): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "uint8_t *"
           HAL_UARTEx_ReceiveToIdle_DMA(&huart2,ORDER_DATA,sizeof(ORDER_DATA));//SERIAL
 ../Core/Src/freertos.c: 6 warnings, 0 errors
 linking...
-Program Size: Code=36020 RO-data=904 RW-data=260 ZI-data=10460  
+Program Size: Code=30424 RO-data=808 RW-data=252 ZI-data=10404  
 FromELF: creating hex file...
 "PBSY\PBSY.axf" - 0 Error(s), 6 Warning(s).
 
@@ -67,7 +67,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE:5.0.1
-Build Time Elapsed:  00:00:01
+Build Time Elapsed:  00:00:02
 </pre>
 </body>
 </html>

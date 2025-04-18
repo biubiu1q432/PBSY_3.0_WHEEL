@@ -110,12 +110,13 @@ int main(void)
     /* USER CODE END WHILE */
 
 	  
-	  
+	  HAL_RCC_GetHCLKFreq()
     /* USER CODE BEGIN 3 */
 
 	HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 	 
 	Delay_us(1000000);
+	  HAL_Delay()
   }
   /* USER CODE END 3 */
 }

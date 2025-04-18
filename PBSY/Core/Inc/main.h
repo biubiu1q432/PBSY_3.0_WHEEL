@@ -140,17 +140,23 @@ typedef struct
 	bool DIS_FLAG;
 
 } MOVE_TASK_STAT;
+
 #define MPU_WEIGHT_FOR_VAL 0.6
 #define LIDAR_WEIGHT_FOR_VAL 0.4
 
 
 typedef struct{
-
 	bool ISDONE ;
 	bool ISID ;
 	bool ISSTOP;
 }TASK_STAT;
 
+
+enum ODERSTAT {
+    null,
+    running,
+    done
+};
 
 
 

@@ -96,7 +96,7 @@ extern Motor_Stat RIG_MOTOR;
 CAR_STAT Car_stat;
 MOVE_TASK_STAT move_task_stat;
 TASK_STAT TaskStat;
-
+enum ODERSTAT OderStat;
 
 //CARD
 extern uint8_t CARD_DATA[CARD_DATA_SIZE];
@@ -240,15 +240,17 @@ void Get_Task(void *argument)
 	char STOP = '!';
 	char ID_ = '@';
  
-	char test_[] = "##################################################################\r\n";
-    /* Infinite loop */
+	char test_[] = "##################################################################";
+	/* Infinite loop */
     for(;;)
     {
-        
+		
+		
 		//SEND
 		if(TaskStat.ISDONE){
 			HAL_UART_Transmit_DMA(&huart2,test_,sizeof(test_));
 			TaskStat.ISDONE = false;
+			
 		}
 		
 		if(xSemaphoreTake(CARD_FLAGHandle,100)==pdTRUE){
@@ -267,7 +269,7 @@ void Get_Task(void *argument)
 		
 		
 		//RECIEVE
-		if(xSemaphoreTake(TASK_FLAGHandle,100) == pdTRUE){
+		if((xSemaphoreTake(TASK_FLAGHandle,100) == pdTRUE)){
 
 			char task_seg[3];
 			float value1, value2;
@@ -275,7 +277,7 @@ void Get_Task(void *argument)
 			sscanf(ORDER_DATA, "%[^|]|%f|%f", task_seg, &value1, &value2);
 			
 			// GoAhead
-			if (strcmp(task_seg, "1") == 0) {
+			if ((strcmp(task_seg, "1") == 0)) {
 				TargetPara.ARG_VAL = value1;
 				TargetPara.SITA = Car_stat.Car_Alpha;
 				
@@ -283,7 +285,7 @@ void Get_Task(void *argument)
 			} 
 			
 			//	Turn
-			else if (strcmp(task_seg, "2") == 0) {
+			else if ((strcmp(task_seg, "2") == 0) && (OderStat != running) ) {
 				TargetPara.MAX_VAL = value2;
 				TargetPara.SITA = value1 + Car_stat.Car_Alpha;
 				
@@ -303,6 +305,7 @@ void Get_Task(void *argument)
 				TargetPara.MAX_VAL = value2;
 				
 				move_task_stat.DIS_FLAG = true;
+
 			}
 			
 			// STop
@@ -310,11 +313,14 @@ void Get_Task(void *argument)
 				move_task_stat.STOP_FLAG = true;
 				printf("GET_ORDER_STOP\r\n");
 			}
-
+			
+			// err
+			else{
+				printf("UN DONE !\r\n");
+			}
 
 		}
-        
-		
+				
 		vTaskDelay(pdMS_TO_TICKS(100));
 
 
@@ -349,6 +355,8 @@ void Read_MPU(void *argument)
 		Car_stat.Car_Alpha = GildeAverageValueFilter_float(attitude_dat.yaw,sita_fliter,FILTER_RANGE);
 		
 		cnt +=1;
+		
+		
 		if(cnt == 5)mpu_isReady = true;
 		vTaskDelay(pdMS_TO_TICKS(30));
 	}
@@ -368,25 +376,23 @@ void Read_Lidar(void *argument)
 	
 	uint8_t cnt = 0;
 	
-//	VL6180X_Init(1);	
-//	vTaskDelay(pdMS_TO_TICKS(10));
-//	VL6180X_Init(2);		
-//	vTaskDelay(pdMS_TO_TICKS(10));
-//	VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
+	VL6180X_Init(1);		
+	VL6180X_Init(2);	
+	VL6180X_Range_Cailbration(&lidar,CAILBRATION_DIS,CAILBRATION_REPIT);
 
 	/* Infinite loop */
     for(;;)
     {
+		lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
+		lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
+
+		Sliding_Window_Algorithm(Queue_lidar,q_size,&lidar);
 		
-//		lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
-//		lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
-//		Sliding_Window_Algorithm(Queue_lidar,q_size,&lidar);
-		
-		
+		HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+
 		cnt+=1;
 		if(cnt == 5)lidar_isReady = true;
 		vTaskDelay(pdMS_TO_TICKS(25));
-
 
     }
   /* USER CODE END Read_Lidar */
@@ -418,11 +424,10 @@ void Move_Control(void *argument)
 	for(;;)
     {
 		
-		CarStat_Get();	
-		HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
-
 		
-		CarStatParmPrint();
+		printf("%d\r\n",OderStat);
+		CarStat_Get();	
+		//CarStatParmPrint();
 		
 		
 		//CarGoAhead_Lidar(45);
@@ -433,11 +438,17 @@ void Move_Control(void *argument)
 		
 		/*内部调用*/
 		if(move_task_stat.STOP_FLAG) {
+	
+			OderStat = running;//命令执行状态
+			
 			printf("RUN_STOP_ORDER\r\n");
 			Car_Move_Stat_Refresh();
 			Car_Dis_ReFresh();
 			ret  += CarStop();
+			
+			
 			if(ret >= 3){
+				OderStat = done;
 				Motor_Set(0,0);
 				printf("STOP OVER!\r\n");
 				TaskStat.ISDONE = true;
@@ -452,8 +463,10 @@ void Move_Control(void *argument)
 		
 		else if(move_task_stat.AHEAD_FLAG) {
             ret += CarGoAhead(TargetPara.ARG_VAL,TargetPara.SITA);
-            if(ret>=3) {
-                move_task_stat.AHEAD_FLAG = false;
+			OderStat = running;
+			if(ret>=3) {
+				OderStat = done;
+				move_task_stat.AHEAD_FLAG = false;
 				Car_Dis_ReFresh();//距离重置
 				TaskStat.ISDONE = true;
 				ret = 0;
@@ -462,11 +475,11 @@ void Move_Control(void *argument)
 
         else if(move_task_stat.TURN_FLAG) {
             ret += CarTurn(TargetPara.SITA,Car_stat.Car_Alpha,TargetPara.MAX_VAL,0.5);
-			printf("RUN_TURN\r\n");
+			OderStat = running;
 
 			if(ret>=3) {
 				printf("TURN OVER \r\n");
-
+				OderStat = done;
 				move_task_stat.TURN_FLAG = false;
                 Car_Alpha_ReFresh(TargetPara.SITA);
 				Car_Dis_ReFresh();
@@ -478,15 +491,21 @@ void Move_Control(void *argument)
 
         else if(move_task_stat.DIS_FLAG) {
 			ret +=CarSetDis(TargetPara.DIS,TargetPara.MAX_VAL,Car_stat.Car_Alpha);
-            if(ret>=3) {
-                move_task_stat.DIS_FLAG = false;
+			OderStat = running;
+
+			if(ret>=3) {
+				OderStat = done;				
+				move_task_stat.DIS_FLAG = false;
 				Car_Dis_ReFresh();
 				TaskStat.ISDONE = true;
 				ret = 0;
             }
 
         }
-
+		
+		else{
+			OderStat = null;
+		}
 
 
         vTaskDelay(pdMS_TO_TICKS(40));
