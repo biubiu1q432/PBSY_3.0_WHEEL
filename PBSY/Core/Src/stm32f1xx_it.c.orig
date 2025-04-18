@@ -263,6 +263,18 @@ void UART4_IRQHandler(void)
   HAL_UART_IRQHandler(&huart4);
   /* USER CODE BEGIN UART4_IRQn 1 */
 
+#if ISBLUE == 1
+	extern struct rx_frame g_uart_rx_frame;
+	#include "atk_mw579_uart.h"
+	#include "atk_mw579.h"
+	//���ڽ�����λ�Ĵ�����æµ�����д���
+	if (__HAL_UART_GET_FLAG(&huart4, UART_FLAG_IDLE) != RESET)       /* UART���߿����ж�(	һ��ʱ����û�н��յ�����	) */
+	{
+			g_uart_rx_frame.sta.finsh = 1;                                      /* ���֡������� */
+			__HAL_UART_CLEAR_IDLEFLAG(&huart4);                          /* ���UART���߿����ж� */
+	}
+#endif
+	
   /* USER CODE END UART4_IRQn 1 */
 }
 

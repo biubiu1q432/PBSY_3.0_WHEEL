@@ -144,7 +144,6 @@ typedef struct
 #define MPU_WEIGHT_FOR_VAL 0.6
 #define LIDAR_WEIGHT_FOR_VAL 0.4
 
-
 typedef struct{
 	bool ISDONE ;
 	bool ISID ;
@@ -157,7 +156,6 @@ enum ODERSTAT {
     running,
     done
 };
-
 
 
 //Lidar
