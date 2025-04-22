@@ -47,6 +47,7 @@ void Motor_Set_Val(float left_val,float right_val);
 uint8_t Motor_Set_Dis(float target_dis,float range_val);
 uint8_t CarSetDis(float target_dis,float range_val,float target_sita);
 //×ßÖ±Ïß
+uint8_t JudgeLidarOut(void);
 uint8_t CarGoAhead(float val,float target_sita);
 uint8_t CarGoAhead_MPU(float val,float target_sita);
 uint8_t CarGoAhead_Lidar(float val);

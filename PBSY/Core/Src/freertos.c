@@ -85,7 +85,7 @@ TARGET_PARA TargetPara;
 
 //Lidar
 Lidar lidar;
-int Queue_lidar[5] = { 255,255,255,255,255 }; // 初始化判断数组
+int Queue_lidar[2] = {255,255}; // 初始化判断数组
 int q_size = sizeof(Queue_lidar) / sizeof(Queue_lidar[0]);
 
 //MOTOR
@@ -278,6 +278,7 @@ void Get_Task(void *argument)
             // GoAhead
             if ((strcmp(task_seg, "1") == 0) && (OderStat != running)) {
                 TargetPara.ARG_VAL = value1;
+				TargetPara.AHEAD_NUM = value2;
                 TargetPara.SITA = Car_stat.Car_Alpha;
 
                 move_task_stat.AHEAD_FLAG = true;
@@ -382,12 +383,14 @@ void Read_Lidar(void *argument)
     /* Infinite loop */
     for(;;)
     {
-        lidar.LefLidar = VL6180X_Read_Range(1) - lidar.Lef_Cali;
+
         lidar.RigLidar = VL6180X_Read_Range(2) - lidar.Rig_Cali;
+        lidar.LefLidar = VL6180X_Read_Range(1)- lidar.Lef_Cali;
 
         Sliding_Window_Algorithm(Queue_lidar,q_size,&lidar);
-
-        HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+		//printf("l:%d  r:  %d \r\n ",lidar.LefLidar,lidar.RigLidar);
+		
+		HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
 
         cnt+=1;
         if(cnt == 5)lidar_isReady = true;
@@ -409,16 +412,20 @@ void Move_Control(void *argument)
     /* USER CODE BEGIN Move_Control */
 
     uint8_t ret = 0;
-    PID_init();
+    uint8_t ahead_cnt = 0;
+	
+	PID_init();
     Car_Move_Stat_Refresh();
     Car_Dis_ReFresh();
-
-
-    while(lidar_isReady != true || mpu_isReady != true)vTaskDelay(pdMS_TO_TICKS(50));
-
+    while(lidar_isReady != true || mpu_isReady != true)vTaskDelay(pdMS_TO_TICKS(50));	
     printf("\n ALL_IS_READEY !!!\r\n");
-    /* Infinite loop */
-
+    
+	
+	move_task_stat.AHEAD_FLAG = true;
+	TargetPara.ARG_VAL = 35;
+	TargetPara.AHEAD_NUM = 2;
+	
+	/* Infinite loop */
 
     for(;;)
     {
@@ -426,18 +433,18 @@ void Move_Control(void *argument)
         CarStat_Get();
         
 		//CarStatParmPrint();
-        //CarGoAhead_Lidar(20);
-        //CarGoAhead(45,TargetPara.SITA);
-
-
-        if(move_task_stat.STOP_FLAG) {
-            //运行中
+		
+		
+		
+		//CarGoAhead(35,TargetPara.SITA);
+		
+		/*急停为最高优先级*/
+		if(move_task_stat.STOP_FLAG) {
             OderStat = running;
             printf("RUN_STOP_ORDER\r\n");
             Car_Move_Stat_Refresh();
             Car_Dis_ReFresh();
             ret  += CarStop();
-            //结束
             if(ret >= 3) {
                 OderStat = done;
                 Motor_Set(0,0);
@@ -450,20 +457,27 @@ void Move_Control(void *argument)
 
         }
 
-        else if(move_task_stat.AHEAD_FLAG) {
-            ret += CarGoAhead(TargetPara.ARG_VAL,TargetPara.SITA);
+        /*直走*/
+		else if(move_task_stat.AHEAD_FLAG) {     			
+			ret += CarGoAhead(TargetPara.ARG_VAL,TargetPara.SITA);
             OderStat = running;
-            if(ret>=3) {
+            //路过一次路口
+			if (ret == 1) ahead_cnt+=1;
+			
+			else if(ret>=4 && (TargetPara.AHEAD_NUM == ahead_cnt)) {
                 OderStat = done;
                 move_task_stat.AHEAD_FLAG = false;
                 Car_Dis_ReFresh();//距离重置
                 TaskStat.ISDONE = true;
                 ret = 0;
+				ahead_cnt = 0;
+				move_task_stat.STOP_FLAG = true;
             }
         }
 
-        else if(move_task_stat.TURN_FLAG) {
-            ret += CarTurn(TargetPara.SITA,Car_stat.Car_Alpha,TargetPara.MAX_VAL,0.5);
+        /*转向  2|90|13 */
+		else if(move_task_stat.TURN_FLAG) {
+            ret += CarTurn(TargetPara.SITA,Car_stat.Car_Alpha,TargetPara.MAX_VAL,2);
             OderStat = running;
 
             if(ret>=3) {
@@ -478,7 +492,8 @@ void Move_Control(void *argument)
 
         }
 
-        else if(move_task_stat.DIS_FLAG) {
+        /*指定距离*/
+		else if(move_task_stat.DIS_FLAG) {
             ret +=CarSetDis(TargetPara.DIS,TargetPara.MAX_VAL,Car_stat.Car_Alpha);
             OderStat = running;
 
@@ -492,12 +507,13 @@ void Move_Control(void *argument)
 
         }
 
-        else {
+        /*无任务*/
+		else {
             OderStat = null;
         }
 
 
-        vTaskDelay(pdMS_TO_TICKS(40));
+        vTaskDelay(pdMS_TO_TICKS(15));
 
 
     }

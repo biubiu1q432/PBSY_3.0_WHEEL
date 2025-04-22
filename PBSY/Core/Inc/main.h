@@ -126,6 +126,7 @@ typedef struct
 	float MAX_VAL;
 	float MIN_VAL;
 
+	int AHEAD_NUM;
 	float SITA;
 	float DIS;
 }TARGET_PARA;
@@ -141,8 +142,7 @@ typedef struct
 
 } MOVE_TASK_STAT;
 
-#define MPU_WEIGHT_FOR_VAL 0.6
-#define LIDAR_WEIGHT_FOR_VAL 0.4
+
 
 typedef struct{
 	bool ISDONE ;
@@ -171,7 +171,7 @@ typedef struct
 #define CAILBRATION_DIS 		45
 #define CAILBRATION_REPIT 	5
 #define LIDAR_MAX_WAIT		6
-#define I2C_DELAY 4
+#define I2C_DELAY 5
 //软硬I2C 	1：硬 2：软
 #define I2CHARDWARE 2
 
@@ -190,7 +190,7 @@ typedef struct
 
 //EC
 #define EC_ARR	65535		
-#define ENCODER_TIME 0.04
+#define ENCODER_TIME 0.015
 #define LEFT_EC_1	1400			
 #define RIGHT_EC_1	1400				
 #define PI		3.1415926			
@@ -208,7 +208,7 @@ typedef struct
 
 //PID
 #define ALLOW_ERR_DIS 0.3
-#define ALLOW_ERR_SITA 0.3
+#define ALLOW_ERR_SITA 0.8
 #define INTEFRAL_MPU_MAX 3
 #define INTEFRAL_LIDAR_MAX 3
 

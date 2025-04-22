@@ -67,9 +67,9 @@ void PID_init()
 	mpu_pid.err_last=0.000;
 	mpu_pid.err_pre=0.000;
 	mpu_pid.err_sum=0.000;
-	mpu_pid.Kp=0.225;
-	mpu_pid.Ki=0.00115;
-	mpu_pid.Kd=0.115;
+	mpu_pid.Kp=0.2;
+	mpu_pid.Ki=0;
+	mpu_pid.Kd=0.005;
 
 	//lidar
 	Lidar_pid.target_dis=0.000;
@@ -90,6 +90,19 @@ void PID_init()
 @para	 恒定速度： float val
 @return 
 **************************************************************************/
+extern Lidar lidar;
+
+
+uint8_t JudgeLidarOut(void){
+	if(lidar.LefLidar >= 100  
+		|| lidar.RigLidar >= 100 
+		|| lidar.LefLidar <= 15 
+		|| lidar.RigLidar<=15)return 1;
+	
+	else return 0;
+
+}
+
 uint8_t CarGoAhead(float val,float target_sita)
 {
 	float val_mpu;
@@ -97,13 +110,20 @@ uint8_t CarGoAhead(float val,float target_sita)
 	float l_val = 0;
 	float r_val = 0;
 	
-//	//over--》激光突变
-//	if(GoToEnd_judge(Queue_lidar,q_size)){
-//		PID_init();
-//		return 0;
-//	}
-	
+	float MPU_WEIGHT_FOR_VAL = 0.6;
+	float LIDAR_WEIGHT_FOR_VAL = 1.f - MPU_WEIGHT_FOR_VAL;
 
+	//over
+	if(JudgeLidarOut()){
+		MPU_WEIGHT_FOR_VAL = 1;
+		LIDAR_WEIGHT_FOR_VAL = 0;
+		printf("lidarout or over \r\n");
+		return 1;
+	}
+	
+	//
+	
+		
 	//角度环--》维持当前角度
 	mpu_pid.target_sita =target_sita;
 	val_mpu=PID_realize_mpu(&mpu_pid,Car_stat.Car_Alpha);
@@ -115,7 +135,6 @@ uint8_t CarGoAhead(float val,float target_sita)
 	//速度环--> VAL = 基础速度 + K1 * 陀螺仪修正 + k2 * 激光修正
 	l_val = val - val_mpu * MPU_WEIGHT_FOR_VAL - val_lidar *  LIDAR_WEIGHT_FOR_VAL;
 	r_val = val + val_mpu * MPU_WEIGHT_FOR_VAL + val_lidar *  LIDAR_WEIGHT_FOR_VAL;
-	
 	
 	
 	Motor_Set_Val(l_val,r_val);
@@ -237,9 +256,65 @@ uint8_t CarTurn(float target_sita,float actual_sita,float max_val,float min_val)
 {
 
 	mpu_pid.target_sita = target_sita;
-	float val=PID_realize_mpu(&mpu_pid,actual_sita);
-	test = val;
 	
+	//分段调节
+	if(mpu_pid.err <= 90 && mpu_pid.err >= -90){
+		mpu_pid.Kp = 0.15;
+		mpu_pid.Kd = 0.000;
+		mpu_pid.Ki = 0.0000;
+		printf("%f\r\n",mpu_pid.err);
+	}
+	
+	
+	else if(mpu_pid.err <= 60 && mpu_pid.err >= -60){
+		mpu_pid.Kp = 0.095;
+		mpu_pid.Kd = 0.000;
+		mpu_pid.Ki = 0.0000;
+		printf("%f\r\n",mpu_pid.err);
+	}
+	
+	else if(mpu_pid.err <= 30 && mpu_pid.err >= -30){
+		mpu_pid.Kp = 0.075;
+		mpu_pid.Kd = 0.000;
+		mpu_pid.Ki = 0.0000;
+		printf("%f\r\n",mpu_pid.err);
+	}
+	
+	else if(mpu_pid.err <= 15 && mpu_pid.err >= -15){
+		mpu_pid.Kp = 0.055;
+		mpu_pid.Kd = 0.000;
+		mpu_pid.Ki = 0.0000;
+		printf("%f\r\n",mpu_pid.err);
+	}
+	
+	
+	else if(mpu_pid.err <= 5 && mpu_pid.err >= -5){
+		mpu_pid.Kp = 0.032;
+		mpu_pid.Kd = 0.000;
+		mpu_pid.Ki = 0.0000;
+		printf("%f\r\n",mpu_pid.err);
+	}
+	
+	
+	
+    else if(mpu_pid.err <= 2.5 && mpu_pid.err >= -2.5){
+		mpu_pid.Kp = 0.022;
+		mpu_pid.Kd = 0.00;
+		mpu_pid.Ki = 0.0000;
+
+		printf("%f\r\n",mpu_pid.err);
+		
+	}
+	
+	else if(mpu_pid.err <= 1.5 && mpu_pid.err >= -1.5){
+		mpu_pid.Kp = 0.001;
+		mpu_pid.Ki = 0.0001;
+		printf("%f\r\n",mpu_pid.err);
+	}
+	
+	float val=PID_realize_mpu(&mpu_pid,actual_sita);
+
+
 	//over
 	if(mpu_pid.err>=0 && mpu_pid.err < ALLOW_ERR_SITA){
 		Motor_Set(0,0);
@@ -277,9 +352,6 @@ uint8_t CarStop(void){
 	if(LEFT_MOTOR.Motorspeed == 0 && LEFT_MOTOR.Motorspeed == 0)return 1;
 	return 0;
 }
-
-
-
 
 
 /**************************************************************************
